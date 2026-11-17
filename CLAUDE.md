@@ -5,9 +5,9 @@ The owner sells TalesRunner in-game items. The site is in Thai and is shared wit
 ## Files
 | File | Purpose |
 |---|---|
-| `shop.html` | **The app.** One file with 2 tabs: 🛒 หน้าร้าน (shop) and ⚙️ จัดการ (manage). All new work goes here. |
+| `index.html` | **The app.** One file with 2 tabs: 🛒 หน้าร้าน (shop) and ⚙️ จัดการ (manage). All new work goes here. |
 | `items.js` | The data: `var SHOP_DATA = {...};`, loaded with a `<script>` tag so the page works from `file://`. The owner edits it through the page and has set many prices and orders by hand, so **never regenerate or overwrite it**. Edit it surgically, and back it up first. |
-| `index.html`, `admin.html` | Old separate pages. They don't support pack, row, hidden/stash, or the categories fields. They are kept but out of date. Removing them was offered and is not done yet. |
+| `admin.html` | Old separate page. Does not support pack, row, hidden/stash, or the categories fields. Kept but out of date. |
 | `server.js` | Optional: `node server.js` starts port 3000, and `POST /save` writes `items.js`. It still opens admin.html; it could be pointed at shop.html. |
 | `dl.js` | Downloads icons by Tales Book ID into `images/<id>.png`. |
 | `fetch-item.js` | Looks up items on Tales Book. |
