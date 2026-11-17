@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>จัดการไอเทม · TalesRunner Shop</title>
+<script src="items.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Noto+Sans+Thai:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FFF6F9;--card:#fff;--border:#F3D9E3;--primary:#C2316A;
+  --price-bg:#FFF1C2;--note-bg:#FDEBF2;--txt:#2D1826;--muted:#9A7080;
+  --green:#2A8A4A;--red:#CC3344;
+}
+html{font-size:16px}
+body{font-family:'Noto Sans Thai','Prompt',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+
+/* ── HEADER ── */
+.admin-header{
+  background:linear-gradient(135deg,#E8547A,#C2316A);
+  color:#fff;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px
+}
+.admin-header h1{font-family:'Prompt',sans-serif;font-size:1.3rem;font-weight:700}
+.admin-header a{color:rgba(255,255,255,.85);font-size:.85rem;text-decoration:none}
+.admin-header a:hover{color:#fff;text-decoration:underline}
+.admin-header{position:sticky;top:0;z-index:20;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+.save-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.save-bar #export-status{font-size:.8rem;color:#fff;opacity:.95}
+.btn-save{background:#fff;color:var(--primary);padding:10px 26px;font-size:.95rem;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.btn-header-ghost{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.7)}
+
+/* ── CONTENT ── */
+.wrap{max-width:860px;margin:0 auto;padding:24px 16px 60px}
+
+/* ── CARD ── */
+.panel{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:20px;margin-bottom:20px}
+.panel h2{font-family:'Prompt',sans-serif;font-size:1rem;font-weight:600;color:var(--primary);margin-bottom:16px}
+
+/* ── FORM ── */
+.form-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.form-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:120px}
+.form-group.w-full{flex:0 0 100%}
+.form-group label{font-size:.8rem;color:var(--muted);font-weight:500}
+.form-control{
+  padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;
+  background:#fff;font-family:'Noto Sans Thai',sans-serif;font-size:.9rem;
+  color:var(--txt);outline:none;transition:border-color .15s
+}
+.form-control:focus{border-color:var(--primary)}
+select.form-control{cursor:pointer}
+
+.btn{
+  padding:9px 20px;border:none;border-radius:9px;font-family:'Prompt',sans-serif;
+  font-weight:600;font-size:.85rem;cursor:pointer;transition:opacity .15s
+}
+.btn:hover{opacity:.88}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-green{background:var(--green);color:#fff}
+.btn-outline{background:#fff;color:var(--primary);border:1.5px solid var(--primary)}
+
+/* ── STATUS ── */
+.status{font-size:.82rem;padding:7px 12px;border-radius:8px;margin-top:8px}
+.status.ok{background:#E8F5EE;color:var(--green)}
+.status.err{background:#FDE8EC;color:var(--red)}
+.status.info{background:#EEF4FF;color:#2255AA}
+
+/* ── TABLE ── */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{font-family:'Prompt',sans-serif;font-weight:600;font-size:.78rem;color:var(--muted);
+   text-align:left;padding:8px 10px;border-bottom:2px solid var(--border);white-space:nowrap}
+td{padding:8px 6px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#FFFAFC}
+
+td input,td select{
+  width:100%;padding:5px 8px;border:1.5px solid transparent;border-radius:7px;
+  font-family:'Noto Sans Thai',sans-serif;font-size:.82rem;color:var(--txt);
+  background:transparent;outline:none;transition:border-color .15s
+}
+td input:focus,td select:focus{border-color:var(--primary);background:#fff}
+td .icon-cell{display:flex;align-items:center;gap:8px}
+td .icon-cell img{width:36px;height:36px;border-radius:6px;object-fit:contain;background:var(--bg)}
+
+.badge-out{
+  display:inline-block;background:#E04060;color:#fff;
+  font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:999px
+}
+.badge-in{
+  display:inline-block;background:#2A8A4A;color:#fff;
+  font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:999px
+}
+
+.btn-del{
+  background:none;border:none;cursor:pointer;color:#CC3344;font-size:1rem;
+  padding:4px 8px;border-radius:6px;transition:background .15s
+}
+.btn-del:hover{background:#FDE8EC}
+
+/* ── DRAG ── */
+td.drag-handle{cursor:grab;color:var(--muted);user-select:none;font-size:1.1rem;text-align:center;width:28px;padding:8px 2px}
+td.drag-handle:hover{color:var(--primary)}
+tr.dragging td{opacity:.4}
+tr.drop-above td{box-shadow:inset 0 2px 0 var(--primary)}
+tr.drop-below td{box-shadow:inset 0 -2px 0 var(--primary)}
+
+/* ── SETS ── */
+.set-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
+@media(max-width:640px){.set-cols{grid-template-columns:1fr}}
+.set-col>label{display:block;font-size:.8rem;color:var(--muted);font-weight:500;margin-bottom:4px}
+.picker,.parts{
+  border:1.5px solid var(--border);border-radius:9px;background:#fff;
+  max-height:280px;overflow-y:auto;margin-top:6px
+}
+.parts{min-height:80px}
+.pick,.part{display:flex;align-items:center;gap:8px;padding:5px 8px;border-bottom:1px solid var(--border);font-size:.82rem}
+.pick:last-child,.part:last-child{border-bottom:none}
+.pick{cursor:pointer}
+.pick:hover{background:#FFFAFC}
+.pick img,.part img,.set-mini img{width:30px;height:30px;border-radius:6px;object-fit:contain;background:var(--bg);flex-shrink:0}
+.pick .nm,.part .nm{flex:1;min-width:0}
+.pick small,.part small{color:var(--muted);font-size:.72rem;white-space:nowrap}
+.pick b{color:var(--primary);font-size:1rem}
+.part input{width:52px;padding:4px 6px;border:1.5px solid var(--border);border-radius:6px;text-align:center;font-family:inherit}
+.empty-hint{padding:14px;text-align:center;color:var(--muted);font-size:.8rem}
+.part .grip{cursor:grab;color:var(--muted);user-select:none;font-size:1rem;padding:0 2px}
+.part .grip:hover{color:var(--primary)}
+.part.dragging{opacity:.4}
+.part.drop-above{box-shadow:inset 0 2px 0 var(--primary)}
+.part.drop-below{box-shadow:inset 0 -2px 0 var(--primary)}
+.set-mini{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:3px}
+.set-mini img{width:24px;height:24px;border-radius:5px}
+.used-note{display:block;font-size:.68rem;color:var(--muted);margin-top:2px;white-space:nowrap}
+.btn-edit{background:none;border:none;cursor:pointer;font-size:.95rem;padding:4px 8px;border-radius:6px}
+.btn-edit:hover{background:var(--note-bg)}
+
+/* ── NOTICE ── */
+.notice{
+  background:#FFF8E6;border:1.5px solid #FFE0A0;border-radius:10px;
+  padding:12px 16px;font-size:.82rem;color:#7A5000;line-height:1.6;margin-bottom:16px
+}
+.notice code{background:#FFE0A0;border-radius:4px;padding:1px 5px;font-size:.8rem}
+</style>
+</head>
+<body>
+
+<div class="admin-header">
+  <div>
+    <h1>⚙️ จัดการไอเทม TalesRunner</h1>
+    <a href="index.html">← กลับไปหน้าร้าน</a>
+  </div>
+  <div class="save-bar">
+    <span id="export-status"></span>
+    <button class="btn btn-header-ghost" id="btn-pick" onclick="changeSaveFile()" style="display:none" title="เลือกไฟล์ items.js ใหม่">📁 เปลี่ยนไฟล์</button>
+    <button class="btn btn-save" onclick="exportJSON()">💾 บันทึก</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- ── จัดเซ็ต ── -->
+  <div class="panel" id="set-panel">
+    <h2>จัดเซ็ต (<span id="set-total">0</span> เซ็ต)</h2>
+    <div class="notice">
+      💡 ค้นหาไอเทมทางซ้ายแล้วกดเพื่อใส่ในเซ็ต · จำนวนเซ็ตคำนวณจากของที่มีให้อัตโนมัติ<br>
+      ชิ้นที่ใช้ทำเซ็ตจะถูกหักออกจาก "ขายแยกชิ้น" ในหน้าร้านเอง ส่วนที่เหลือขายแยกตามปกติ
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>ชื่อเซ็ต *</label>
+        <input class="form-control" id="s-name" type="text" placeholder="เช่น เซ็ตเหมียวสคูลแบนด์ (ช)">
+      </div>
+      <div class="form-group" style="flex:0 0 110px">
+        <label>ราคาเซ็ต (บาท)</label>
+        <input class="form-control" id="s-price" type="number" placeholder="สอบถาม" min="0">
+      </div>
+      <div class="form-group" style="flex:0 0 130px">
+        <label>ขายสูงสุดกี่เซ็ต</label>
+        <input class="form-control" id="s-max" type="number" placeholder="อัตโนมัติ" min="0">
+      </div>
+      <div class="form-group" style="flex:0 0 130px">
+        <label>รูปในการ์ดแถวละ</label>
+        <select class="form-control" id="s-icols"></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group w-full">
+        <label>หมายเหตุ (ไม่บังคับ)</label>
+        <input class="form-control" id="s-note" type="text" placeholder="เช่น ได้ครบทั้งชุด">
+      </div>
+    </div>
+
+    <div class="set-cols">
+      <div class="set-col">
+        <label>เลือกไอเทม</label>
+        <input class="form-control" id="s-q" type="text" placeholder="ค้นหา เช่น สคูลแบนด์" oninput="renderPicker()" style="width:100%">
+        <div class="picker" id="s-picker"></div>
+      </div>
+      <div class="set-col">
+        <label>ไอเทมในเซ็ต (จำนวนต่อ 1 เซ็ต)</label>
+        <div class="parts" id="s-parts"></div>
+        <div id="s-preview"></div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary" id="s-save" onclick="saveSet()">+ สร้างเซ็ต</button>
+      <button class="btn btn-outline" id="s-cancel" onclick="resetSetForm()" style="display:none">ยกเลิกการแก้ไข</button>
+    </div>
+    <div id="set-status"></div>
+
+    <div class="form-row" style="margin-top:18px;align-items:flex-end">
+      <div class="form-group" style="flex:0 0 auto">
+        <label>หน้าร้านแสดงเซ็ตแถวละ</label>
+        <select class="form-control" id="s-cols" onchange="setColumns(this.value)">
+          <option value="">อัตโนมัติ (ตามขนาดจอ)</option>
+          <option value="1">1 คอลัมน์</option>
+          <option value="2">2 คอลัมน์</option>
+          <option value="3">3 คอลัมน์</option>
+          <option value="4">4 คอลัมน์</option>
+        </select>
+      </div>
+      <span style="font-size:.75rem;color:var(--muted);padding-bottom:10px">บนมือถือแสดงไม่เกิน 2 คอลัมน์</span>
+    </div>
+
+    <div class="table-wrap" style="margin-top:10px">
+      <table>
+        <thead>
+          <tr><th></th><th>เซ็ต</th><th>ไอเทมในเซ็ต</th><th>รูปแถวละ</th><th>ราคา</th><th>ได้</th><th></th></tr>
+        </thead>
+        <tbody id="set-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── รายการไอเทม ── -->
+  <div class="panel">
+    <h2>รายการไอเทม (<span id="total">0</span> รายการ)</h2>
+    <div class="notice" id="load-notice">กำลังโหลด items.js…</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th>รูป/ชื่อ</th>
+            <th>หมวด</th>
+            <th>ราคา (บาท)</th>
+            <th>คงเหลือ</th>
+            <th>หน่วย</th>
+            <th>หมายเหตุ</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="item-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36'%3E%3Crect width='36' height='36' rx='6' fill='%23F3D9E3'/%3E%3Ctext x='18' y='22' font-size='16' text-anchor='middle' fill='%23C2316A'%3E%3F%3C/text%3E%3C/svg%3E";
+
+let shopData = { shop: { name: 'ร้านไอเทม TalesRunner', contact_url: '#', contact_label: 'ทักแชทสั่งซื้อ', updated: today() }, items: [] };
+
+function today() { return new Date().toISOString().slice(0,10); }
+
+function status(el, msg, type) {
+  const d = document.getElementById(el);
+  d.className = 'status ' + type;
+  d.textContent = msg;
+  d.style.display = msg ? '' : 'none';
+}
+
+/* ── Load items.js ── */
+function loadData() {
+  if (window.SHOP_DATA) {
+    shopData = JSON.parse(JSON.stringify(window.SHOP_DATA));
+    document.getElementById('load-notice').style.display = 'none';
+  } else {
+    document.getElementById('load-notice').textContent =
+      '⚠️ โหลด items.js ไม่ได้ — ตรวจสอบว่าไฟล์ items.js อยู่ในโฟลเดอร์เดียวกัน';
+    document.getElementById('load-notice').style.background = '#FDE8EC';
+    document.getElementById('load-notice').style.borderColor = '#FFAAB0';
+    document.getElementById('load-notice').style.color = '#CC3344';
+  }
+  shopData.sets = shopData.sets || [];
+  document.getElementById('s-icols').innerHTML = iconColOptions(null);
+  renderAll();
+}
+
+function renderAll() {
+  renderTable();
+  renderSets();
+  renderSetEditor();
+}
+
+/* ── Categories ── */
+const OTHER_CAT = 'อื่น ๆ';
+function categories() {
+  return (shopData.shop.categories || []).filter(c => c !== OTHER_CAT).concat(OTHER_CAT);
+}
+function catOptions(selected) {
+  const cats = categories();
+  const cur = cats.includes(selected) ? selected : OTHER_CAT;
+  return cats.map(c => `<option${c === cur ? ' selected' : ''}>${esc(c)}</option>`).join('');
+}
+
+/* ── Render table ── */
+function renderTable() {
+  document.getElementById('total').textContent = shopData.items.length;
+  const tbody = document.getElementById('item-tbody');
+  if (!shopData.items.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">ยังไม่มีไอเทม</td></tr>';
+    return;
+  }
+  const { left } = allocate(shopData.items, shopData.sets);
+  tbody.innerHTML = shopData.items.map((item, i) => {
+    const src = item.image || PLACEHOLDER;
+    const badge = item.stock <= 0
+      ? '<span class="badge-out">ขายแล้ว</span>'
+      : '<span class="badge-in">มีของ</span>';
+    const inSets = (item.stock || 0) - left.get(item.id);
+    const used = inSets > 0 ? `<span class="used-note">เข้าเซ็ต ${inSets} · ขายแยก ${left.get(item.id)}</span>` : '';
+    return `<tr data-i="${i}">
+  <td class="drag-handle" onmousedown="this.parentNode.draggable=true" title="ลากเพื่อเรียงลำดับ">⠿</td>
+  <td>
+    <div class="icon-cell">
+      <img src="${esc(src)}" alt="${esc(item.name)}" onerror="this.src='${PLACEHOLDER}'" title="ID: ${item.talesbook_id||'-'}">
+      <input value="${esc(item.name)}" onchange="update(${i},'name',this.value)" style="font-weight:500">
+    </div>
+  </td>
+  <td>
+    <select onchange="update(${i},'category',this.value)" style="width:110px">${catOptions(item.category)}</select>
+  </td>
+  <td><input type="number" value="${item.price??''}" placeholder="สอบถาม" onchange="update(${i},'price',this.value?parseFloat(this.value):null)" style="width:90px" min="0"></td>
+  <td style="text-align:center">
+    <input type="number" value="${item.stock}" onchange="update(${i},'stock',parseInt(this.value)||0)" style="width:60px;text-align:center" min="0">
+    ${badge}${used}
+  </td>
+  <td>
+    <select onchange="update(${i},'unit',this.value)" style="width:70px">
+      <option${item.unit==='ชิ้น'?' selected':''}>ชิ้น</option>
+      <option${item.unit==='ชุด'?' selected':''}>ชุด</option>
+      <option${item.unit==='อัน'?' selected':''}>อัน</option>
+    </select>
+  </td>
+  <td><input value="${esc(item.note||'')}" placeholder="—" onchange="update(${i},'note',this.value)"></td>
+  <td><button class="btn-del" onclick="delItem(${i})" title="ลบ">🗑</button></td>
+</tr>`;
+  }).join('');
+}
+
+function update(i, field, val) { shopData.items[i][field] = val; renderAll(); }
+function delItem(i) {
+  const item = shopData.items[i];
+  const inSets = shopData.sets.filter(s => s.parts.some(p => p.item === item.id));
+  const warn = inSets.length ? `\n(จะถูกเอาออกจากเซ็ต: ${inSets.map(s => s.name).join(', ')})` : '';
+  if (!confirm('ลบ "' + item.name + '" ใช่ไหม?' + warn)) return;
+  shopData.items.splice(i, 1);
+  shopData.sets.forEach(s => { s.parts = s.parts.filter(p => p.item !== item.id); });
+  draft.parts = draft.parts.filter(p => p.item !== item.id);
+  renderAll();
+}
+
+/* ── Sets ── */
+// Sets take their pieces from item stock in set order; whatever is left is sold separately.
+// (Same logic as allocate() in index.html.)
+function allocate(items, sets) {
+  const left = new Map(items.map(i => [i.id, Math.max(0, i.stock || 0)]));
+  const count = new Map();
+  for (const s of sets) {
+    const parts = (s.parts || []).filter(p => left.has(p.item) && p.qty > 0);
+    let n = parts.length ? Math.min(...parts.map(p => Math.floor(left.get(p.item) / p.qty))) : 0;
+    if (s.max != null && s.max >= 0) n = Math.min(n, s.max);
+    for (const p of parts) left.set(p.item, left.get(p.item) - n * p.qty);
+    count.set(s.id, n);
+  }
+  return { count, left };
+}
+
+let draft = { parts: [] };
+let editingSetId = null;
+const itemById = id => shopData.items.find(i => i.id === id);
+
+function renderPicker() {
+  const q = document.getElementById('s-q').value.toLowerCase().trim();
+  const taken = new Set(draft.parts.map(p => p.item));
+  const list = shopData.items
+    .filter(i => !taken.has(i.id) && (!q || i.name.toLowerCase().includes(q)))
+    .slice(0, 60);
+  const { left } = allocate(shopData.items, shopData.sets);
+  document.getElementById('s-picker').innerHTML = list.length
+    ? list.map(i => `<div class="pick" onclick="addPart(${i.id})">
+        <img src="${esc(i.image || PLACEHOLDER)}" onerror="this.src='${PLACEHOLDER}'" alt="">
+        <span class="nm">${esc(i.name)}</span>${stockSplit(i, left)}<b>+</b>
+      </div>`).join('')
+    : '<div class="empty-hint">ไม่พบไอเทม</div>';
+}
+
+// "มี 3 (เซ็ต 1 แยก 2)" (counts from the saved sets, not the one being edited)
+function stockSplit(item, left) {
+  const total = item.stock || 0;
+  const single = left.get(item.id);
+  return `<small>มี ${total} (เซ็ต ${total - single} แยก ${single})</small>`;
+}
+
+function renderSetEditor() {
+  const { left } = allocate(shopData.items, shopData.sets);
+  document.getElementById('s-parts').innerHTML = draft.parts.length
+    ? draft.parts.map((p, k) => {
+        const it = itemById(p.item);
+        return `<div class="part" data-k="${k}">
+          <span class="grip" onmousedown="this.parentNode.draggable=true" title="ลากเพื่อเรียงลำดับ">⠿</span>
+          <img src="${esc(it.image || PLACEHOLDER)}" onerror="this.src='${PLACEHOLDER}'" alt="">
+          <span class="nm">${esc(it.name)}</span>${stockSplit(it, left)}
+          <input type="number" min="1" value="${p.qty}" onchange="setPartQty(${k}, this.value)" title="จำนวนต่อ 1 เซ็ต">
+          <button class="btn-del" onclick="removePart(${k})" title="เอาออก">✕</button>
+        </div>`;
+      }).join('')
+    : '<div class="empty-hint">ยังไม่มีไอเทม — กดเลือกจากทางซ้าย</div>';
+
+  // preview: how many sets this draft would make after the other sets take their share
+  const others = shopData.sets.filter(s => s.id !== editingSetId);
+  const max = document.getElementById('s-max').value;
+  const probe = { id: '__draft', parts: draft.parts, max: max === '' ? null : +max };
+  const n = draft.parts.length ? allocate(shopData.items, [...others, probe]).count.get('__draft') : 0;
+  const pv = document.getElementById('s-preview');
+  pv.className = 'status ' + (draft.parts.length ? (n > 0 ? 'ok' : 'err') : 'info');
+  pv.textContent = draft.parts.length ? `ทำได้ ${n} เซ็ต` : 'เลือกไอเทมอย่างน้อย 1 ชิ้น';
+  renderPicker();
+}
+
+/* drag to reorder the sets themselves (shop shows sets in this order) */
+let setFrom = null;
+const setTbody = document.getElementById('set-tbody');
+function clearSetMarks() {
+  setTbody.querySelectorAll('.drop-above,.drop-below').forEach(r => r.classList.remove('drop-above', 'drop-below'));
+}
+setTbody.addEventListener('dragstart', e => {
+  const tr = e.target.closest('tr[data-k]');
+  if (!tr) return;
+  setFrom = +tr.dataset.k;
+  tr.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', '');
+});
+setTbody.addEventListener('dragover', e => {
+  if (setFrom === null) return;
+  e.preventDefault();
+  clearSetMarks();
+  const tr = e.target.closest('tr[data-k]');
+  if (!tr || +tr.dataset.k === setFrom) return;
+  const r = tr.getBoundingClientRect();
+  tr.classList.add(e.clientY > r.top + r.height / 2 ? 'drop-below' : 'drop-above');
+});
+setTbody.addEventListener('drop', e => {
+  e.preventDefault();
+  const tr = e.target.closest('tr[data-k]');
+  if (setFrom === null || !tr || +tr.dataset.k === setFrom) return;
+  let to = +tr.dataset.k + (tr.classList.contains('drop-below') ? 1 : 0);
+  if (setFrom < to) to--;
+  const [moved] = shopData.sets.splice(setFrom, 1);
+  shopData.sets.splice(to, 0, moved);
+  setFrom = null;
+  renderAll();
+  status('set-status', '↕️ เปลี่ยนลำดับเซ็ตแล้ว — อย่าลืมกดบันทึก', 'ok');
+});
+setTbody.addEventListener('dragend', () => {
+  setFrom = null;
+  clearSetMarks();
+  setTbody.querySelectorAll('tr').forEach(r => { r.draggable = false; r.classList.remove('dragging'); });
+});
+document.addEventListener('mouseup', () => {
+  if (setFrom === null) setTbody.querySelectorAll('tr[draggable="true"]').forEach(r => r.draggable = false);
+});
+
+/* drag to reorder items inside the set being edited */
+let partFrom = null;
+const partsEl = document.getElementById('s-parts');
+function clearPartMarks() {
+  partsEl.querySelectorAll('.drop-above,.drop-below').forEach(r => r.classList.remove('drop-above', 'drop-below'));
+}
+partsEl.addEventListener('dragstart', e => {
+  const row = e.target.closest('.part[data-k]');
+  if (!row) return;
+  partFrom = +row.dataset.k;
+  row.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', '');
+});
+partsEl.addEventListener('dragover', e => {
+  if (partFrom === null) return;
+  e.preventDefault();
+  clearPartMarks();
+  const row = e.target.closest('.part[data-k]');
+  if (!row || +row.dataset.k === partFrom) return;
+  const r = row.getBoundingClientRect();
+  row.classList.add(e.clientY > r.top + r.height / 2 ? 'drop-below' : 'drop-above');
+});
+partsEl.addEventListener('drop', e => {
+  e.preventDefault();
+  const row = e.target.closest('.part[data-k]');
+  if (partFrom === null || !row || +row.dataset.k === partFrom) return;
+  let to = +row.dataset.k + (row.classList.contains('drop-below') ? 1 : 0);
+  if (partFrom < to) to--;
+  const [moved] = draft.parts.splice(partFrom, 1);
+  draft.parts.splice(to, 0, moved);
+  partFrom = null;
+  renderSetEditor();
+});
+partsEl.addEventListener('dragend', () => {
+  partFrom = null;
+  clearPartMarks();
+  partsEl.querySelectorAll('.part').forEach(r => { r.draggable = false; r.classList.remove('dragging'); });
+});
+document.addEventListener('mouseup', () => {
+  if (partFrom === null) partsEl.querySelectorAll('.part[draggable="true"]').forEach(r => r.draggable = false);
+});
+
+function addPart(id) { draft.parts.push({ item: id, qty: 1 }); renderSetEditor(); }
+function removePart(k) { draft.parts.splice(k, 1); renderSetEditor(); }
+function setPartQty(k, v) { draft.parts[k].qty = Math.max(1, parseInt(v) || 1); renderSetEditor(); }
+document.getElementById('s-max').addEventListener('input', renderSetEditor);
+
+function saveSet() {
+  const name = document.getElementById('s-name').value.trim();
+  if (!name) { status('set-status', '⚠️ ตั้งชื่อเซ็ตด้วยนะคะ', 'err'); return; }
+  if (!draft.parts.length) { status('set-status', '⚠️ เลือกไอเทมใส่เซ็ตก่อนนะคะ', 'err'); return; }
+  const priceV = document.getElementById('s-price').value;
+  const maxV = document.getElementById('s-max').value;
+  const fields = {
+    name,
+    price: priceV ? parseFloat(priceV) : null,
+    max: maxV === '' ? null : Math.max(0, parseInt(maxV) || 0),
+    icon_cols: parseInt(document.getElementById('s-icols').value) || null,
+    note: document.getElementById('s-note').value.trim(),
+    parts: draft.parts.map(p => ({ item: p.item, qty: p.qty }))
+  };
+  if (editingSetId !== null) {
+    Object.assign(shopData.sets.find(s => s.id === editingSetId), fields);
+    status('set-status', '✅ แก้ไขเซ็ตแล้ว — อย่าลืมกดบันทึก', 'ok');
+  } else {
+    const id = shopData.sets.length ? Math.max(...shopData.sets.map(s => s.id)) + 1 : 1;
+    shopData.sets.push({ id, ...fields });
+    status('set-status', '✅ สร้างเซ็ตแล้ว — อย่าลืมกดบันทึก', 'ok');
+  }
+  resetSetForm(true);
+}
+
+function resetSetForm(keepStatus) {
+  editingSetId = null;
+  draft = { parts: [] };
+  ['s-name', 's-price', 's-max', 's-note', 's-q', 's-icols'].forEach(x => document.getElementById(x).value = '');
+  document.getElementById('s-save').textContent = '+ สร้างเซ็ต';
+  document.getElementById('s-cancel').style.display = 'none';
+  if (keepStatus !== true) status('set-status', '', 'info');
+  renderAll();
+}
+
+function editSet(id) {
+  const s = shopData.sets.find(x => x.id === id);
+  editingSetId = id;
+  draft = { parts: s.parts.map(p => ({ ...p })) };
+  document.getElementById('s-name').value = s.name;
+  document.getElementById('s-price').value = s.price ?? '';
+  document.getElementById('s-max').value = s.max ?? '';
+  document.getElementById('s-note').value = s.note || '';
+  document.getElementById('s-icols').value = s.icon_cols || '';
+  document.getElementById('s-save').textContent = '💾 บันทึกการแก้ไข';
+  document.getElementById('s-cancel').style.display = '';
+  status('set-status', '✏️ กำลังแก้ไข "' + s.name + '"', 'info');
+  renderSetEditor();
+  document.getElementById('set-panel').scrollIntoView({ behavior: 'smooth' });
+}
+
+function delSet(id) {
+  const s = shopData.sets.find(x => x.id === id);
+  if (!confirm('ลบเซ็ต "' + s.name + '" ใช่ไหม? (ไอเทมจะกลับไปขายแยก)')) return;
+  shopData.sets = shopData.sets.filter(x => x.id !== id);
+  if (editingSetId === id) resetSetForm();
+  else renderAll();
+}
+
+function renameSet(id, name) {
+  name = name.trim();
+  const s = shopData.sets.find(x => x.id === id);
+  if (!name) { renderSets(); return; }
+  s.name = name;
+  if (editingSetId === id) document.getElementById('s-name').value = name;
+  status('set-status', '✅ เปลี่ยนชื่อเซ็ตแล้ว — อย่าลืมกดบันทึก', 'ok');
+  renderSets();
+}
+
+function iconColOptions(selected) {
+  return [['', 'อัตโนมัติ'], ['2', '2 รูป'], ['3', '3 รูป'], ['4', '4 รูป'], ['5', '5 รูป']]
+    .map(([v, t]) => `<option value="${v}"${String(selected || '') === v ? ' selected' : ''}>${t}</option>`).join('');
+}
+function setIconCols(id, v) {
+  shopData.sets.find(x => x.id === id).icon_cols = v ? parseInt(v) : null;
+  if (editingSetId === id) document.getElementById('s-icols').value = v;
+  status('set-status', '✅ เปลี่ยนการเรียงรูปแล้ว — อย่าลืมกดบันทึก', 'ok');
+}
+
+function setColumns(v) {
+  shopData.shop.set_columns = v ? parseInt(v) : null;
+  status('set-status', '✅ เปลี่ยนจำนวนคอลัมน์แล้ว — อย่าลืมกดบันทึก', 'ok');
+}
+
+function renderSets() {
+  document.getElementById('s-cols').value = shopData.shop.set_columns || '';
+  document.getElementById('set-total').textContent = shopData.sets.length;
+  const tbody = document.getElementById('set-tbody');
+  if (!shopData.sets.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:18px">ยังไม่มีเซ็ต</td></tr>';
+    return;
+  }
+  const { count } = allocate(shopData.items, shopData.sets);
+  tbody.innerHTML = shopData.sets.map((s, k) => {
+    const parts = s.parts.map(p => ({ ...p, it: itemById(p.item) })).filter(p => p.it);
+    return `<tr data-k="${k}">
+  <td class="drag-handle" onmousedown="this.parentNode.draggable=true" title="ลากเพื่อเรียงลำดับเซ็ต">⠿</td>
+  <td>
+    <input value="${esc(s.name)}" onchange="renameSet(${s.id}, this.value)" title="แก้ชื่อเซ็ตได้ตรงนี้" style="font-weight:600;min-width:160px">
+    ${s.note ? `<span class="used-note">${esc(s.note)}</span>` : ''}
+  </td>
+  <td>
+    <div class="set-mini">${parts.map(p => `<img src="${esc(p.it.image || PLACEHOLDER)}" onerror="this.src='${PLACEHOLDER}'" title="${esc(p.it.name)}" alt="">`).join('')}</div>
+    <span style="font-size:.75rem;color:var(--muted)">${parts.map(p => esc(p.it.name) + (p.qty > 1 ? ' ×' + p.qty : '')).join(', ')}</span>
+  </td>
+  <td><select onchange="setIconCols(${s.id}, this.value)" style="width:90px">${iconColOptions(s.icon_cols)}</select></td>
+  <td style="white-space:nowrap">${s.price ? s.price.toLocaleString('th-TH') + ' ฿' : 'สอบถาม'}</td>
+  <td style="white-space:nowrap">${count.get(s.id) || 0} เซ็ต${s.max != null ? `<span class="used-note">สูงสุด ${s.max}</span>` : ''}</td>
+  <td style="white-space:nowrap">
+    <button class="btn-edit" onclick="editSet(${s.id})" title="แก้ไข">✏️</button>
+    <button class="btn-del" onclick="delSet(${s.id})" title="ลบ">🗑</button>
+  </td>
+</tr>`;
+  }).join('');
+}
+
+/* ── Drag to reorder ── */
+let dragFrom = null;
+const tbodyEl = document.getElementById('item-tbody');
+
+function clearDropMarks() {
+  tbodyEl.querySelectorAll('.drop-above,.drop-below').forEach(r => r.classList.remove('drop-above','drop-below'));
+}
+tbodyEl.addEventListener('dragstart', e => {
+  const tr = e.target.closest('tr[data-i]');
+  if (!tr) return;
+  dragFrom = +tr.dataset.i;
+  tr.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', '');
+});
+tbodyEl.addEventListener('dragover', e => {
+  if (dragFrom === null) return;
+  e.preventDefault();
+  clearDropMarks();
+  const tr = e.target.closest('tr[data-i]');
+  if (!tr || +tr.dataset.i === dragFrom) return;
+  const r = tr.getBoundingClientRect();
+  tr.classList.add(e.clientY > r.top + r.height / 2 ? 'drop-below' : 'drop-above');
+});
+tbodyEl.addEventListener('drop', e => {
+  e.preventDefault();
+  const tr = e.target.closest('tr[data-i]');
+  if (dragFrom === null || !tr || +tr.dataset.i === dragFrom) return;
+  let to = +tr.dataset.i + (tr.classList.contains('drop-below') ? 1 : 0);
+  if (dragFrom < to) to--;
+  const [moved] = shopData.items.splice(dragFrom, 1);
+  shopData.items.splice(to, 0, moved);
+  dragFrom = null;
+  renderTable();
+  document.getElementById('export-status').textContent = '↕️ เปลี่ยนลำดับแล้ว — อย่าลืมกดบันทึก';
+});
+tbodyEl.addEventListener('dragend', () => {
+  dragFrom = null;
+  clearDropMarks();
+  tbodyEl.querySelectorAll('tr').forEach(r => { r.draggable = false; r.classList.remove('dragging'); });
+});
+document.addEventListener('mouseup', () => {
+  if (dragFrom === null) tbodyEl.querySelectorAll('tr[draggable="true"]').forEach(r => r.draggable = false);
+});
+
+/* ── Save/Export ── */
+function getJS() {
+  const copy = JSON.parse(JSON.stringify(shopData));
+  copy.shop.updated = today();
+  return 'var SHOP_DATA = ' + JSON.stringify(copy, null, 2) + ';\n';
+}
+async function exportJSON() {
+  const st = document.getElementById('export-status');
+  if (location.protocol !== 'file:') {
+    // server mode — save directly
+    try {
+      st.textContent = '⏳ กำลังบันทึก…';
+      const r = await fetch('/save', { method: 'POST', body: getJS() });
+      const j = await r.json();
+      if (j.ok) { st.textContent = '✅ บันทึกแล้ว!'; }
+      else throw new Error(j.error);
+    } catch (e) { st.textContent = '❌ ' + e.message; }
+  } else if (window.showSaveFilePicker) {
+    // file:// on Chrome/Edge — write straight into the chosen items.js
+    try {
+      const handle = await getSaveHandle();
+      if (!handle) { st.textContent = 'ยกเลิกการบันทึก'; return; }
+      const w = await handle.createWritable();
+      await w.write(getJS());
+      await w.close();
+      st.textContent = '✅ บันทึกลง ' + handle.name + ' แล้ว!';
+      document.getElementById('btn-pick').style.display = '';
+    } catch (e) { st.textContent = '❌ ' + e.message; }
+  } else {
+    // file:// fallback — download
+    const a = document.createElement('a');
+    a.href = 'data:text/javascript;charset=utf-8,' + encodeURIComponent(getJS());
+    a.download = 'items.js';
+    a.click();
+    st.textContent = '✅ ดาวน์โหลดแล้ว — นำไปแทนไฟล์เดิม';
+  }
+}
+/* ── Remember the chosen items.js (IndexedDB keeps the file handle across reloads) ── */
+let saveHandle = null;
+function idb(mode, fn) {
+  return new Promise((resolve, reject) => {
+    const open = indexedDB.open('tr-admin', 1);
+    open.onupgradeneeded = () => open.result.createObjectStore('kv');
+    open.onerror = () => reject(open.error);
+    open.onsuccess = () => {
+      const req = fn(open.result.transaction('kv', mode).objectStore('kv'));
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    };
+  });
+}
+async function getSaveHandle() {
+  if (!saveHandle) {
+    try { saveHandle = await idb('readonly', s => s.get('items-handle')) || null; } catch {}
+  }
+  if (saveHandle) {
+    const opts = { mode: 'readwrite' };
+    if (await saveHandle.queryPermission(opts) === 'granted' ||
+        await saveHandle.requestPermission(opts) === 'granted') return saveHandle;
+  }
+  return pickSaveFile();
+}
+async function pickSaveFile() {
+  try {
+    saveHandle = await window.showSaveFilePicker({
+      suggestedName: 'items.js',
+      types: [{ description: 'items.js', accept: { 'text/javascript': ['.js'] } }]
+    });
+  } catch (e) {
+    if (e.name === 'AbortError') return null;
+    throw e;
+  }
+  try { await idb('readwrite', s => s.put(saveHandle, 'items-handle')); } catch {}
+  return saveHandle;
+}
+async function changeSaveFile() {
+  const st = document.getElementById('export-status');
+  try {
+    const h = await pickSaveFile();
+    st.textContent = h ? '📁 จะบันทึกลง ' + h.name + ' — กดบันทึกได้เลย' : '';
+  } catch (e) { st.textContent = '❌ ' + e.message; }
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+loadData();
+</script>
+</body>
+</html>

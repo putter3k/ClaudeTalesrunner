@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:talesbook.org)",
+      "WebFetch(domain:cdn.talesbook.org)",
+      "WebFetch(domain:assets.talesbook.org)"
+    ]
+  }
+}

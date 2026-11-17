@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ร้านไอเทม TalesRunner</title>
+<script src="items.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Noto+Sans+Thai:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#FFF6F9;
+  --card:#FFFFFF;
+  --border:#F3D9E3;
+  --set-border:#EFB3CA;
+  --primary:#C2316A;
+  --primary-soft:#FCE4EE;
+  --price-bg:#FFF1C2;
+  --price-txt:#8A3D00;
+  --ask-bg:#EFEFEF;
+  --ask-txt:#888;
+  --note-txt:#8A3D6A;
+  --txt:#2D1826;
+  --muted:#9A7080;
+}
+
+html{font-size:16px}
+body{font-family:'Noto Sans Thai','Prompt',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+
+/* ── HEADER (compact) ── */
+.site-header{
+  background:linear-gradient(135deg,#E8547A 0%,#C2316A 100%);
+  color:#fff;padding:14px 16px
+}
+.header-inner{
+  max-width:1280px;margin:0 auto;display:flex;align-items:center;
+  justify-content:space-between;gap:12px;flex-wrap:wrap
+}
+.site-header h1{font-family:'Prompt',sans-serif;font-size:1.35rem;font-weight:700}
+.site-header .subtitle{font-size:.8rem;opacity:.9;margin-top:2px}
+.btn-chat{
+  display:inline-block;background:#fff;color:var(--primary);
+  font-family:'Prompt',sans-serif;font-weight:600;font-size:.9rem;
+  padding:9px 24px;border-radius:999px;text-decoration:none;white-space:nowrap;
+  box-shadow:0 2px 10px rgba(0,0,0,.18);transition:transform .15s
+}
+.btn-chat:hover{transform:translateY(-1px)}
+
+/* ── STICKY TOOLBAR ── */
+.toolbar-wrap{
+  position:sticky;top:0;z-index:10;background:rgba(255,246,249,.96);
+  backdrop-filter:blur(6px);border-bottom:1.5px solid var(--border)
+}
+.toolbar{max-width:1280px;margin:0 auto;padding:10px 16px 8px;display:flex;flex-direction:column;gap:8px}
+.tool-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+.search-wrap{position:relative;flex:1;min-width:160px}
+.search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.search-input{
+  width:100%;padding:8px 12px 8px 34px;border:1.5px solid var(--border);
+  border-radius:9px;background:#fff;font-family:inherit;font-size:.88rem;color:var(--txt);outline:none
+}
+.search-input:focus{border-color:var(--primary)}
+.search-input::placeholder{color:var(--muted)}
+
+.ctl{
+  padding:8px 11px;border:1.5px solid var(--border);border-radius:9px;background:#fff;
+  font-family:inherit;font-size:.84rem;color:var(--txt);outline:none;cursor:pointer;white-space:nowrap
+}
+.ctl:focus{border-color:var(--primary)}
+label.ctl{display:flex;align-items:center;gap:6px;color:var(--muted)}
+label.ctl input{accent-color:var(--primary)}
+button.ctl:hover,label.ctl:hover{border-color:var(--primary);color:var(--primary)}
+
+.view-toggle{display:flex;border:1.5px solid var(--border);border-radius:9px;overflow:hidden;background:#fff}
+.view-toggle button{
+  border:none;background:none;padding:7px 11px;font-size:.84rem;font-family:inherit;
+  color:var(--muted);cursor:pointer
+}
+.view-toggle button.on{background:var(--primary);color:#fff}
+
+/* category chips */
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:thin;align-items:center}
+.chip{
+  flex:0 0 auto;border:1.5px solid var(--border);background:#fff;color:var(--txt);
+  border-radius:999px;padding:4px 12px;font-family:'Prompt',sans-serif;font-size:.8rem;cursor:pointer;white-space:nowrap
+}
+.chip span{color:var(--muted);font-size:.72rem;margin-left:3px}
+.chip:hover{border-color:var(--primary)}
+.chip.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.chip.on span{color:rgba(255,255,255,.8)}
+.chip.main{font-weight:600}
+.chip-sep{flex:0 0 1.5px;align-self:stretch;background:var(--border);margin:2px 2px}
+
+/* ── CONTENT ── */
+.content{max-width:1280px;margin:0 auto;padding:14px 16px 48px}
+.summary{font-size:.8rem;color:var(--muted);margin-bottom:10px}
+
+.part{margin-bottom:30px}
+.part-head{
+  font-family:'Prompt',sans-serif;font-size:1.2rem;font-weight:700;color:var(--txt);
+  margin-bottom:12px;display:flex;align-items:baseline;gap:8px
+}
+.part-head span{font-size:.8rem;font-weight:400;color:var(--muted)}
+
+.cat-section{margin-bottom:22px}
+.cat-head{
+  font-family:'Prompt',sans-serif;font-size:.98rem;font-weight:600;color:var(--primary);
+  margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid var(--border);
+  display:flex;align-items:baseline;gap:8px
+}
+.cat-head span{font-size:.76rem;font-weight:400;color:var(--muted)}
+
+/* ── SET CARDS ── */
+.sets{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.sets.fixed{grid-template-columns:repeat(var(--cols),minmax(0,1fr))}
+.set-card{
+  background:var(--card);border:2px solid var(--set-border);border-radius:12px;
+  padding:10px;display:flex;flex-direction:column;gap:7px;position:relative
+}
+.set-icons{display:flex;flex-wrap:wrap;gap:4px}
+.set-icons img{width:42px;height:42px;border-radius:8px;object-fit:contain;background:var(--bg)}
+/* per-set icon columns (set.icon_cols from admin) */
+.set-icons.cols{display:grid;grid-template-columns:repeat(var(--ic),minmax(0,1fr));gap:6px;justify-items:center}
+.set-icons.cols img{width:100%;max-width:64px;height:auto;aspect-ratio:1}
+.set-name{font-family:'Prompt',sans-serif;font-weight:600;font-size:.9rem;line-height:1.35}
+.set-parts{list-style:none;font-size:.72rem;color:var(--muted);line-height:1.55}
+.set-card .meta{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-top:auto}
+.set-card .note{
+  font-size:.7rem;color:var(--note-txt);background:var(--primary-soft);border-radius:6px;padding:3px 7px
+}
+
+/* ── GRID VIEW (dense cards) ── */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:8px}
+.card{
+  background:var(--card);border:1.5px solid var(--border);border-radius:11px;
+  padding:8px 7px 7px;display:flex;flex-direction:column;align-items:center;gap:5px;
+  position:relative;transition:box-shadow .15s,transform .15s
+}
+.card:hover{box-shadow:0 3px 14px rgba(194,49,106,.12);transform:translateY(-1px)}
+.card .icon{width:56px;height:56px;border-radius:9px;object-fit:contain;background:var(--bg)}
+.card .name{
+  font-size:.76rem;font-weight:500;text-align:center;line-height:1.35;min-height:2.7em;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden
+}
+.card .meta{display:flex;justify-content:space-between;align-items:center;width:100%;gap:4px}
+.price{
+  background:var(--price-bg);color:var(--price-txt);font-family:'Prompt',sans-serif;
+  font-weight:700;font-size:.76rem;border-radius:6px;padding:2px 7px;white-space:nowrap
+}
+.price.ask{background:var(--ask-bg);color:var(--ask-txt);font-weight:500}
+.qty{font-size:.72rem;color:var(--muted);white-space:nowrap}
+.card .note{
+  font-size:.68rem;color:var(--note-txt);background:var(--primary-soft);border-radius:6px;
+  padding:2px 6px;width:100%;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.badge-sold{
+  position:absolute;top:5px;right:5px;background:#D94060;color:#fff;
+  font-family:'Prompt',sans-serif;font-size:.6rem;font-weight:700;padding:1px 7px;border-radius:999px
+}
+.sold-out{opacity:.5}
+.sold-out:hover{transform:none;box-shadow:none}
+
+/* ── LIST VIEW (dense rows, multi-column) ── */
+.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:6px}
+.row{
+  background:var(--card);border:1.5px solid var(--border);border-radius:9px;
+  padding:5px 8px;display:flex;align-items:center;gap:8px;position:relative
+}
+.row .icon{width:36px;height:36px;border-radius:7px;object-fit:contain;background:var(--bg);flex-shrink:0}
+.row .name{flex:1;min-width:0;font-size:.8rem;font-weight:500;line-height:1.3}
+.row .name small{display:block;font-size:.68rem;color:var(--note-txt);font-weight:400}
+.row .qty{min-width:52px;text-align:right}
+
+.empty-state{text-align:center;padding:56px 20px;color:var(--muted);font-size:.95rem;line-height:2}
+
+/* ── FOOTER ── */
+.site-footer{background:#fff;border-top:1.5px solid var(--border);padding:24px 16px 32px}
+.footer-inner{max-width:920px;margin:0 auto}
+.footer-inner h3{font-family:'Prompt',sans-serif;font-size:1rem;font-weight:600;color:var(--primary);margin-bottom:16px;text-align:center}
+.steps{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.step{display:flex;align-items:flex-start;gap:10px;flex:1;min-width:155px;max-width:230px}
+.step-num{
+  background:var(--primary);color:#fff;font-family:'Prompt',sans-serif;font-weight:700;font-size:.85rem;
+  width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0
+}
+.step-txt{font-size:.85rem;line-height:1.55;padding-top:3px}
+
+/* ── SCREENSHOT MODE ── */
+body.sc .toolbar-wrap,body.sc .site-footer,body.sc .summary{display:none}
+body.sc .btn-chat{display:none}
+
+/* ── RESPONSIVE ── */
+@media(max-width:560px){
+  .grid{grid-template-columns:repeat(3,1fr);gap:6px}
+  .card .icon{width:48px;height:48px}
+  .list,.sets{grid-template-columns:1fr}
+  .sets.fixed{grid-template-columns:repeat(var(--cols-m),minmax(0,1fr))}
+  .site-header h1{font-size:1.15rem}
+  .btn-chat{padding:7px 16px;font-size:.82rem}
+}
+@media(max-width:360px){.grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div>
+      <h1 id="shop-name">ร้านไอเทม TalesRunner</h1>
+      <p class="subtitle" id="shop-subtitle">ราคาเป็นบาท · อัปเดตล่าสุด —</p>
+    </div>
+    <a href="#" id="btn-chat" class="btn-chat">ทักแชทสั่งซื้อ</a>
+  </div>
+</header>
+
+<div class="toolbar-wrap">
+  <div class="toolbar">
+    <div class="tool-row">
+      <div class="search-wrap">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input class="search-input" id="q" type="text" placeholder="ค้นหาชื่อไอเทมหรือเซ็ต…">
+      </div>
+      <select class="ctl" id="sort">
+        <option value="group">จัดกลุ่มชื่อคล้ายกัน</option>
+        <option value="stock">จำนวนมาก → น้อย</option>
+        <option value="asc">ราคา น้อย → มาก</option>
+        <option value="desc">ราคา มาก → น้อย</option>
+        <option value="manual">ตามลำดับในแอดมิน</option>
+      </select>
+      <label class="ctl"><input type="checkbox" id="hide-sold"> ซ่อนของหมด</label>
+      <div class="view-toggle" role="group" aria-label="มุมมอง">
+        <button id="v-grid" title="การ์ด">▦ การ์ด</button>
+        <button id="v-list" title="รายการ">☰ รายการ</button>
+      </div>
+      <button class="ctl" id="btn-sc">📷 แคปจอ</button>
+    </div>
+    <div class="chips" id="chips"></div>
+  </div>
+</div>
+
+<main class="content">
+  <div class="summary" id="summary"></div>
+  <div id="grid"></div>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <h3>วิธีสั่งซื้อ</h3>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-txt">จดชื่อไอเทมหรือแคปหน้าจอที่ต้องการ</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-txt">ทักแชทพร้อมแจ้งชื่อตัวละครในเกม</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-txt">โอนเงินแล้วรอรับไอเทมในเกมได้เลย</div></div>
+    </div>
+  </div>
+</footer>
+
+<script>
+const PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72'%3E%3Crect width='72' height='72' rx='12' fill='%23F3D9E3'/%3E%3Ctext x='36' y='44' font-size='30' text-anchor='middle' fill='%23C2316A'%3E%3F%3C/text%3E%3C/svg%3E";
+const OTHER = 'อื่น ๆ';
+const SETS_KEY = '__sets', SINGLES_KEY = '__singles';
+// Item names containing the same keyword are shown next to each other (first match wins).
+const DEFAULT_SERIES = [
+  'สคูลแบนด์', 'มืดมน', 'ลูกหมา', 'น้อนหมา', 'เปลวไฟ', 'ออโรร่า', 'เฮนรี่ ไคเซอร์', 'จอมมารฮารุ',
+  'ปิเอโร่โจ๊กเกอร์', 'กระต่าย', 'อึนกาบี', 'อึนฮวี', 'เลิฟเดลิเวอร์รี่', 'เลิฟแอนด์มอร์', 'ด็อกเตอร์',
+  'ไนต์แมร์', 'มินิ', 'ตุ๊กตาข้อมือ', 'ฝันดี', 'โครงกระดูกน่ารัก', 'ไวท์เมมโมรี่', 'แฟนธ่อม', 'งานแต่ง',
+  'โลฟเฟอร์', 'แมงมุม', 'ค้างคาว', 'หมออีกาขาว', 'แก้วเปลี่ยนสีชื่อ', 'ไส้เดือน', 'TR ', 'EXP '
+];
+
+const MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+function thaiDate(str) {
+  if (!str) return '';
+  const d = new Date(str + 'T00:00:00');
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear() + 543}`;
+}
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function pref(key, val) {
+  try { if (val === undefined) return localStorage.getItem(key); localStorage.setItem(key, val); } catch { return null; }
+}
+
+// Sets take their pieces from item stock in set order; whatever is left is sold separately.
+// (Same logic as allocate() in admin.html.)
+function allocate(items, sets) {
+  const left = new Map(items.map(i => [i.id, Math.max(0, i.stock || 0)]));
+  const count = new Map();
+  for (const s of sets) {
+    const parts = (s.parts || []).filter(p => left.has(p.item) && p.qty > 0);
+    let n = parts.length ? Math.min(...parts.map(p => Math.floor(left.get(p.item) / p.qty))) : 0;
+    if (s.max != null && s.max >= 0) n = Math.min(n, s.max);
+    for (const p of parts) left.set(p.item, left.get(p.item) - n * p.qty);
+    count.set(s.id, n);
+  }
+  return { count, left };
+}
+
+let ITEMS = [], SETS = [], CATS = [OTHER], SERIES = DEFAULT_SERIES;
+let SET_COLS = null;  // shop.set_columns from admin; null = fit as many as the width allows
+let curCat = '';
+let view = pref('tr-view') === 'list' ? 'list' : 'grid';
+
+function catOf(item) { return CATS.includes(item.category) ? item.category : OTHER; }
+function seriesOf(name) {
+  const i = SERIES.findIndex(k => name.includes(k));
+  return i < 0 ? SERIES.length : i;
+}
+
+function init() {
+  const data = window.SHOP_DATA;
+  if (!data) {
+    document.getElementById('grid').innerHTML =
+      '<div class="empty-state">⚠️ โหลดข้อมูลไม่ได้<br><small>ตรวจสอบว่าไฟล์ items.js อยู่ในโฟลเดอร์เดียวกัน</small></div>';
+    return;
+  }
+  const s = data.shop || {};
+  if (s.name) document.getElementById('shop-name').textContent = s.name;
+  if (s.updated) document.getElementById('shop-subtitle').textContent = 'ราคาเป็นบาท · อัปเดตล่าสุด ' + thaiDate(s.updated);
+  if (s.contact_url) {
+    const b = document.getElementById('btn-chat');
+    b.href = s.contact_url;
+    if (s.contact_label) b.textContent = s.contact_label;
+  }
+  if (Array.isArray(s.series) && s.series.length) SERIES = s.series;
+  CATS = (s.categories || []).filter(c => c !== OTHER).concat(OTHER);
+  SET_COLS = s.set_columns > 0 ? s.set_columns : null;
+
+  const items = data.items || [];
+  const sets = data.sets || [];
+  const { count, left } = allocate(items, sets);
+  const byId = new Map(items.map(i => [i.id, i]));
+  // stock = what can be sold separately; items whose whole stock went into sets are not listed
+  ITEMS = items
+    .map(i => ({ ...i, stock: left.get(i.id) }))
+    .filter(i => i.stock > 0 || !((byId.get(i.id).stock || 0) > 0));
+  SETS = sets.map(st => ({
+    ...st,
+    stock: count.get(st.id) || 0,
+    parts: (st.parts || []).map(p => ({ ...p, item: byId.get(p.item) })).filter(p => p.item)
+  }));
+  render();
+}
+
+function matches(q, ...names) { return !q || names.some(n => n.toLowerCase().includes(q)); }
+function hideSold() { return document.getElementById('hide-sold').checked || document.body.classList.contains('sc'); }
+
+function filteredSets() {
+  const q = document.getElementById('q').value.toLowerCase().trim();
+  return SETS.filter(s => !(hideSold() && !(s.stock > 0)) && matches(q, s.name, ...s.parts.map(p => p.item.name)));
+}
+function filteredItems(ignoreCat) {
+  const q = document.getElementById('q').value.toLowerCase().trim();
+  return ITEMS.filter(i => {
+    if (hideSold() && !(i.stock > 0)) return false;
+    if (!matches(q, i.name)) return false;
+    if (!ignoreCat && CATS.includes(curCat) && catOf(i) !== curCat) return false;
+    return true;
+  });
+}
+
+function sortList(list) {
+  const srt = document.getElementById('sort').value;
+  const byName = (a, b) => a.name.localeCompare(b.name, 'th');
+  if (srt === 'group') list.sort((a, b) => seriesOf(a.name) - seriesOf(b.name) || byName(a, b));
+  else if (srt === 'stock') list.sort((a, b) => (b.stock || 0) - (a.stock || 0) || byName(a, b));
+  else if (srt === 'asc') list.sort((a, b) => (a.price || Infinity) - (b.price || Infinity) || byName(a, b));
+  else if (srt === 'desc') list.sort((a, b) => (b.price || -1) - (a.price || -1) || byName(a, b));
+  return list;
+}
+
+function renderChips(nSets, singles) {
+  const count = c => singles.filter(i => catOf(i) === c).length;
+  const chip = (val, label, n, main) =>
+    `<button class="chip${main ? ' main' : ''}${val === curCat ? ' on' : ''}" data-cat="${esc(val)}">${esc(label)}<span>${n}</span></button>`;
+  let html = chip('', 'ทั้งหมด', nSets + singles.length, true);
+  if (SETS.length) html += chip(SETS_KEY, '🎁 ขายเป็นเซ็ต', nSets, true);
+  html += chip(SINGLES_KEY, '🧩 ขายแยกชิ้น', singles.length, true) + '<span class="chip-sep"></span>';
+  html += CATS.filter(c => count(c) > 0).map(c => chip(c, c, count(c), false)).join('');
+  document.getElementById('chips').innerHTML = html;
+}
+
+function priceTag(item) {
+  return item.price > 0
+    ? `<span class="price">${item.price.toLocaleString('th-TH')} ฿</span>`
+    : `<span class="price ask">สอบถาม</span>`;
+}
+function qtyText(item, unit) { return item.stock > 0 ? `เหลือ ${item.stock}${unit ? ' ' + unit : ''}` : 'หมด'; }
+function img(src, cls) {
+  return `<img class="${cls || ''}" src="${esc(src || PLACEHOLDER)}" alt="" loading="lazy" onerror="this.src='${PLACEHOLDER}'">`;
+}
+
+function setCard(s) {
+  const out = !(s.stock > 0);
+  return `<div class="set-card${out ? ' sold-out' : ''}">
+  ${out ? '<span class="badge-sold">ขายแล้ว</span>' : ''}
+  <div class="set-icons${s.icon_cols > 0 ? ' cols' : ''}"${s.icon_cols > 0 ? ` style="--ic:${s.icon_cols}"` : ''}>${s.parts.map(p => img(p.item.image)).join('')}</div>
+  <div class="set-name">${esc(s.name)}</div>
+  <ul class="set-parts">${s.parts.map(p => `<li>• ${esc(p.item.name)}${p.qty > 1 ? ` ×${p.qty}` : ''}</li>`).join('')}</ul>
+  ${s.note ? `<div class="note">${esc(s.note)}</div>` : ''}
+  <div class="meta">${priceTag(s)}<span class="qty">${qtyText(s, 'เซ็ต')}</span></div>
+</div>`;
+}
+function card(item) {
+  const out = !(item.stock > 0);
+  return `<div class="card${out ? ' sold-out' : ''}" title="${esc(item.name)}">
+  ${out ? '<span class="badge-sold">ขายแล้ว</span>' : ''}
+  ${img(item.image, 'icon')}
+  <div class="name">${esc(item.name)}</div>
+  <div class="meta">${priceTag(item)}<span class="qty">${qtyText(item)}</span></div>
+  ${item.note ? `<div class="note" title="${esc(item.note)}">${esc(item.note)}</div>` : ''}
+</div>`;
+}
+function row(item) {
+  const out = !(item.stock > 0);
+  return `<div class="row${out ? ' sold-out' : ''}">
+  ${img(item.image, 'icon')}
+  <div class="name">${esc(item.name)}${item.note ? `<small>${esc(item.note)}</small>` : ''}</div>
+  <span class="qty">${qtyText(item)}</span>
+  ${priceTag(item)}
+</div>`;
+}
+
+function render() {
+  // sets keep the order arranged in admin, unless sorting by price or stock
+  const keepOrder = ['group', 'manual'].includes(document.getElementById('sort').value);
+  const sets = keepOrder ? filteredSets() : sortList(filteredSets());
+  const singlesAll = filteredItems(true);
+  renderChips(sets.length, singlesAll);
+  document.getElementById('v-grid').classList.toggle('on', view === 'grid');
+  document.getElementById('v-list').classList.toggle('on', view === 'list');
+
+  const showSets = curCat === '' || curCat === SETS_KEY;
+  const showSingles = curCat !== SETS_KEY;
+  const singles = showSingles ? sortList(filteredItems(false)) : [];
+  const setList = showSets ? sets : [];
+
+  document.getElementById('summary').textContent =
+    `เซ็ต ${setList.length} · ขายแยก ${singles.length} รายการ (มีของ ${singles.filter(i => i.stock > 0).length})`;
+
+  let html = '';
+  if (setList.length) {
+    html += `<section class="part">
+  <h2 class="part-head">🎁 ขายเป็นเซ็ต <span>${setList.length} เซ็ต</span></h2>
+  <div class="sets${SET_COLS ? ' fixed' : ''}"${SET_COLS ? ` style="--cols:${SET_COLS};--cols-m:${Math.min(SET_COLS, 2)}"` : ''}>${setList.map(setCard).join('')}</div>
+</section>`;
+  }
+  if (singles.length) {
+    const one = view === 'list' ? row : card;
+    const wrap = view === 'list' ? 'list' : 'grid';
+    html += `<section class="part">
+  <h2 class="part-head">🧩 ขายแยกชิ้น <span>${singles.length} รายการ</span></h2>
+  ${CATS.map(c => {
+    const list = singles.filter(i => catOf(i) === c);
+    if (!list.length) return '';
+    return `<section class="cat-section">
+    <h3 class="cat-head">${esc(c)} <span>${list.length} รายการ</span></h3>
+    <div class="${wrap}">${list.map(one).join('')}</div>
+  </section>`;
+  }).join('')}
+</section>`;
+  }
+  document.getElementById('grid').innerHTML = html || '<div class="empty-state">ไม่พบไอเทมที่ค้นหา</div>';
+}
+
+document.getElementById('q').addEventListener('input', render);
+document.getElementById('sort').addEventListener('change', render);
+document.getElementById('hide-sold').addEventListener('change', render);
+document.getElementById('chips').addEventListener('click', e => {
+  const b = e.target.closest('.chip');
+  if (!b) return;
+  curCat = b.dataset.cat;
+  render();
+  window.scrollTo({ top: 0 });
+});
+document.getElementById('v-grid').addEventListener('click', () => { view = 'grid'; pref('tr-view', view); render(); });
+document.getElementById('v-list').addEventListener('click', () => { view = 'list'; pref('tr-view', view); render(); });
+document.getElementById('btn-sc').addEventListener('click', () => {
+  document.body.classList.add('sc');
+  render();
+  window.scrollTo({ top: 0 });
+});
+// leave screenshot mode with Esc or a click on the header
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('sc')) { document.body.classList.remove('sc'); render(); } });
+document.querySelector('.site-header').addEventListener('click', e => {
+  if (document.body.classList.contains('sc') && !e.target.closest('a')) { document.body.classList.remove('sc'); render(); }
+});
+
+if (new URLSearchParams(location.search).has('screenshot')) document.body.classList.add('sc');
+
+init();
+</script>
+</body>
+</html>
