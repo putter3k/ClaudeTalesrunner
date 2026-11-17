@@ -3,13 +3,13 @@ var SHOP_DATA = {
     "name": "ร้านไอเทม TalesRunner",
     "contact_url": "#",
     "contact_label": "ทักแชทสั่งซื้อ",
-    "updated": "2026-11-17",
+    "updated": "2026-11-17T13:23",
     "categories": [
+      "ท่าโพส",
       "ของหายาก",
       "กล่อง",
       "ชุดสุ่ม",
       "ชุดทั่วไป",
-      "ท่าโพส",
       "ปิเอโร่โจ๊กเกอร์",
       "บอส",
       "สีชื่อ & สกิน"
@@ -24,9 +24,10 @@ var SHOP_DATA = {
     "cat_rows": {
       "บอส": 4,
       "ของหายาก": 1,
-      "ชุดทั่วไป": 4,
+      "ชุดทั่วไป": 6,
       "ชุดสุ่ม": 3
-    }
+    },
+    "set_rows": 2
   },
   "items": [
     {
@@ -191,7 +192,7 @@ var SHOP_DATA = {
       "name": "แพ็กลูกหมาแบกหลัง",
       "category": "ชุดสุ่ม",
       "image": "images/125880.png",
-      "price": 400,
+      "price": 350,
       "stock": 3,
       "unit": "ชิ้น",
       "note": "",
@@ -1073,11 +1074,11 @@ var SHOP_DATA = {
       "row": 2
     },
     {
-      "id": 51,
-      "talesbook_id": 102388,
-      "name": "กางเกงปาร์ตี้ชุดนอน (ญ)",
+      "id": 76,
+      "talesbook_id": 84807,
+      "name": "ผมแต่งงานแฟนธ่อม (ญ)",
       "category": "ชุดทั่วไป",
-      "image": "images/102388.png",
+      "image": "images/84807.png",
       "price": 10,
       "stock": 1,
       "unit": "ชิ้น",
@@ -1097,23 +1098,11 @@ var SHOP_DATA = {
       "row": 2
     },
     {
-      "id": 76,
-      "talesbook_id": 84807,
-      "name": "ผมแต่งงานแฟนธ่อม (ญ)",
+      "id": 77,
+      "talesbook_id": 104625,
+      "name": "ผมแต่งงานมังกรฟ้า (ญ)",
       "category": "ชุดทั่วไป",
-      "image": "images/84807.png",
-      "price": 10,
-      "stock": 1,
-      "unit": "ชิ้น",
-      "note": "",
-      "row": 2
-    },
-    {
-      "id": 65,
-      "talesbook_id": 42021,
-      "name": "ถุงมือปาร์ตี้งานแต่ง A",
-      "category": "ชุดทั่วไป",
-      "image": "images/42021.png",
+      "image": "images/104625.png",
       "price": 10,
       "stock": 1,
       "unit": "ชิ้น",
@@ -1133,35 +1122,23 @@ var SHOP_DATA = {
       "row": 2
     },
     {
-      "id": 20,
-      "talesbook_id": 118888,
-      "name": "แพ็กกำไลแมงมุมลาย",
+      "id": 65,
+      "talesbook_id": 42021,
+      "name": "ถุงมือปาร์ตี้งานแต่ง A",
       "category": "ชุดทั่วไป",
-      "image": "images/118888.png",
+      "image": "images/42021.png",
       "price": 10,
-      "stock": 5,
+      "stock": 1,
       "unit": "ชิ้น",
       "note": "",
       "row": 2
     },
     {
-      "id": 23,
-      "talesbook_id": 118890,
-      "name": "แพ็กปีกค้างคาวซีเคร็ต",
+      "id": 51,
+      "talesbook_id": 102388,
+      "name": "กางเกงปาร์ตี้ชุดนอน (ญ)",
       "category": "ชุดทั่วไป",
-      "image": "images/118890.png",
-      "price": 10,
-      "stock": 4,
-      "unit": "ชิ้น",
-      "note": "",
-      "row": 2
-    },
-    {
-      "id": 77,
-      "talesbook_id": 104625,
-      "name": "ผมแต่งงานมังกรฟ้า (ญ)",
-      "category": "ชุดทั่วไป",
-      "image": "images/104625.png",
+      "image": "images/102388.png",
       "price": 10,
       "stock": 1,
       "unit": "ชิ้น",
@@ -1250,7 +1227,7 @@ var SHOP_DATA = {
       "stock": 2,
       "unit": "ชิ้น",
       "note": "",
-      "row": 3
+      "row": 4
     },
     {
       "id": 22,
@@ -1262,7 +1239,7 @@ var SHOP_DATA = {
       "stock": 4,
       "unit": "ชิ้น",
       "note": "",
-      "row": 3
+      "row": 4
     },
     {
       "id": 109,
@@ -1274,7 +1251,7 @@ var SHOP_DATA = {
       "stock": 1,
       "unit": "ชิ้น",
       "note": "",
-      "row": 3
+      "row": 4
     },
     {
       "id": 19,
@@ -1286,7 +1263,7 @@ var SHOP_DATA = {
       "stock": 6,
       "unit": "ชิ้น",
       "note": "",
-      "row": 3
+      "row": 4
     },
     {
       "id": 72,
@@ -1297,51 +1274,8 @@ var SHOP_DATA = {
       "price": 150,
       "stock": 1,
       "unit": "ชิ้น",
-      "note": ""
-    },
-    {
-      "id": 71,
-      "talesbook_id": 61604,
-      "name": "ปีกด็อกเตอร์ไนต์แมร์",
-      "category": "ชุดทั่วไป",
-      "image": "images/61604.png",
-      "price": 40,
-      "stock": 1,
-      "unit": "ชิ้น",
-      "note": ""
-    },
-    {
-      "id": 73,
-      "talesbook_id": 86628,
-      "name": "ปีกเทพตกสวรรค์ (ญ)",
-      "category": "ชุดทั่วไป",
-      "image": "images/86628.png",
-      "price": 40,
-      "stock": 1,
-      "unit": "ชิ้น",
-      "note": ""
-    },
-    {
-      "id": 75,
-      "talesbook_id": 82318,
-      "name": "ปีกไวท์เมมโมรี่",
-      "category": "ชุดทั่วไป",
-      "image": "images/82318.png",
-      "price": 40,
-      "stock": 1,
-      "unit": "ชิ้น",
-      "note": ""
-    },
-    {
-      "id": 110,
-      "talesbook_id": 61616,
-      "name": "หลอดดูดยาไนต์แมร์",
-      "category": "ชุดทั่วไป",
-      "image": "images/61616.png",
-      "price": 40,
-      "stock": 1,
-      "unit": "ชิ้น",
-      "note": ""
+      "note": "",
+      "row": 0
     },
     {
       "id": 70,
@@ -1349,7 +1283,7 @@ var SHOP_DATA = {
       "name": "นกฮูกฝันดี",
       "category": "ชุดทั่วไป",
       "image": "images/117585.png",
-      "price": 40,
+      "price": 50,
       "stock": 1,
       "unit": "ชิ้น",
       "note": ""
@@ -1364,6 +1298,54 @@ var SHOP_DATA = {
       "stock": 3,
       "unit": "ชิ้น",
       "note": ""
+    },
+    {
+      "id": 71,
+      "talesbook_id": 61604,
+      "name": "ปีกด็อกเตอร์ไนต์แมร์",
+      "category": "ชุดทั่วไป",
+      "image": "images/61604.png",
+      "price": 40,
+      "stock": 1,
+      "unit": "ชิ้น",
+      "note": "",
+      "row": 0
+    },
+    {
+      "id": 73,
+      "talesbook_id": 86628,
+      "name": "ปีกเทพตกสวรรค์ (ญ)",
+      "category": "ชุดทั่วไป",
+      "image": "images/86628.png",
+      "price": 40,
+      "stock": 1,
+      "unit": "ชิ้น",
+      "note": "",
+      "row": 0
+    },
+    {
+      "id": 75,
+      "talesbook_id": 82318,
+      "name": "ปีกไวท์เมมโมรี่",
+      "category": "ชุดทั่วไป",
+      "image": "images/82318.png",
+      "price": 40,
+      "stock": 1,
+      "unit": "ชิ้น",
+      "note": "",
+      "row": 0
+    },
+    {
+      "id": 110,
+      "talesbook_id": 61616,
+      "name": "หลอดดูดยาไนต์แมร์",
+      "category": "ชุดทั่วไป",
+      "image": "images/61616.png",
+      "price": 40,
+      "stock": 1,
+      "unit": "ชิ้น",
+      "note": "",
+      "row": 0
     },
     {
       "id": 62,
@@ -1426,7 +1408,7 @@ var SHOP_DATA = {
       "stock": 1,
       "unit": "ชิ้น",
       "note": "",
-      "row": 4
+      "row": 5
     },
     {
       "id": 66,
@@ -1438,7 +1420,7 @@ var SHOP_DATA = {
       "stock": 1,
       "unit": "ชิ้น",
       "note": "",
-      "row": 4
+      "row": 5
     },
     {
       "id": 46,
@@ -1450,7 +1432,7 @@ var SHOP_DATA = {
       "stock": 2,
       "unit": "ชิ้น",
       "note": "",
-      "row": 4
+      "row": 5
     },
     {
       "id": 56,
@@ -1462,7 +1444,7 @@ var SHOP_DATA = {
       "stock": 1,
       "unit": "ชิ้น",
       "note": "",
-      "row": 4
+      "row": 5
     },
     {
       "id": 80,
@@ -1474,7 +1456,7 @@ var SHOP_DATA = {
       "stock": 1,
       "unit": "ชิ้น",
       "note": "",
-      "row": 4
+      "row": 5
     },
     {
       "id": 92,
@@ -1486,7 +1468,7 @@ var SHOP_DATA = {
       "stock": 1,
       "unit": "ชิ้น",
       "note": "",
-      "row": 4
+      "row": 5
     },
     {
       "id": 93,
@@ -1498,7 +1480,7 @@ var SHOP_DATA = {
       "stock": 1,
       "unit": "ชิ้น",
       "note": "",
-      "row": 4
+      "row": 5
     },
     {
       "id": 94,
@@ -1510,7 +1492,31 @@ var SHOP_DATA = {
       "stock": 1,
       "unit": "ชิ้น",
       "note": "",
-      "row": 4
+      "row": 5
+    },
+    {
+      "id": 20,
+      "talesbook_id": 118888,
+      "name": "แพ็กกำไลแมงมุมลาย",
+      "category": "ชุดทั่วไป",
+      "image": "images/118888.png",
+      "price": 10,
+      "stock": 5,
+      "unit": "ชิ้น",
+      "note": "",
+      "row": 3
+    },
+    {
+      "id": 23,
+      "talesbook_id": 118890,
+      "name": "แพ็กปีกค้างคาวซีเคร็ต",
+      "category": "ชุดทั่วไป",
+      "image": "images/118890.png",
+      "price": 10,
+      "stock": 4,
+      "unit": "ชิ้น",
+      "note": "",
+      "row": 3
     }
   ],
   "sets": [
@@ -1593,32 +1599,6 @@ var SHOP_DATA = {
       ]
     },
     {
-      "id": 3,
-      "name": "เซ็ตโครงกระดูกน่ารัก",
-      "price": 50,
-      "max": null,
-      "icon_cols": 4,
-      "note": "",
-      "parts": [
-        {
-          "item": 38,
-          "qty": 1
-        },
-        {
-          "item": 20,
-          "qty": 1
-        },
-        {
-          "item": 23,
-          "qty": 1
-        },
-        {
-          "item": 37,
-          "qty": 1
-        }
-      ]
-    },
-    {
       "id": 4,
       "name": "เซ็ตออโร่ร่าครบรอบ 19 ปี",
       "price": 500,
@@ -1642,7 +1622,8 @@ var SHOP_DATA = {
           "item": 28,
           "qty": 1
         }
-      ]
+      ],
+      "row": 1
     },
     {
       "id": 6,
@@ -1660,7 +1641,35 @@ var SHOP_DATA = {
           "item": 31,
           "qty": 1
         }
-      ]
+      ],
+      "row": 1
+    },
+    {
+      "id": 3,
+      "name": "เซ็ตโครงกระดูกน่ารัก",
+      "price": 50,
+      "max": null,
+      "icon_cols": 4,
+      "note": "",
+      "parts": [
+        {
+          "item": 38,
+          "qty": 1
+        },
+        {
+          "item": 20,
+          "qty": 1
+        },
+        {
+          "item": 23,
+          "qty": 1
+        },
+        {
+          "item": 37,
+          "qty": 1
+        }
+      ],
+      "row": 1
     }
   ]
 };

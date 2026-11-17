@@ -470,6 +470,7 @@ tr.drop-below td,.part.drop-below{box-shadow:inset 0 -2px 0 var(--primary)}
 }
 @media(max-width:360px){.grid{grid-template-columns:repeat(2,1fr)}}
 </style>
+<style>#btn-edit,#btn-save,#btn-pick,#tabbtn-admin{display:none!important}</style>
 </head>
 <body>
 
@@ -661,7 +662,11 @@ const $ = id => document.getElementById(id);
 function esc(s) {
   return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-function today() { return new Date().toISOString().slice(0, 10); }
+function today() {
+  const th = new Date(Date.now() + 7 * 60 * 60 * 1000);
+  const pad = n => String(n).padStart(2, '0');
+  return `${th.getUTCFullYear()}-${pad(th.getUTCMonth()+1)}-${pad(th.getUTCDate())}T${pad(th.getUTCHours())}:${pad(th.getUTCMinutes())}`;
+}
 function pref(key, val) {
   try { if (val === undefined) return localStorage.getItem(key); localStorage.setItem(key, val); } catch { return null; }
 }
@@ -745,8 +750,10 @@ const DEFAULT_SERIES = [
 const MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 function thaiDate(str) {
   if (!str) return '';
-  const d = new Date(str + 'T00:00:00');
-  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear() + 543}`;
+  const [datePart, timePart] = str.split('T');
+  const [y, m, d] = datePart.split('-').map(Number);
+  const dateStr = `${d} ${MONTHS[m-1]} ${y + 543}`;
+  return timePart ? `${dateStr} ${timePart} น.` : dateStr;
 }
 
 let curCat = '';
@@ -909,14 +916,25 @@ function renderShop() {
     `เซ็ต ${setList.length} · ขายแยก ${singles.length} รายการ (มีของ ${singles.filter(i => i.stock > 0).length})`;
 
   const cols = data.shop.set_columns > 0 ? data.shop.set_columns : null;
+  const ed = editing();
   let html = '';
-  if (setList.length) {
+  if (setList.length || (ed && !setsHidden())) {
+    const nSetRows = ed ? setRowCount() : Math.max(1, ...data.sets.map(s => setRowOf(s) + 1));
+    let setRowsHtml = '';
+    for (let r = 0; r < nSetRows; r++) {
+      const inRow = setList.filter(s => setRowOf(s) === r);
+      if (!inRow.length && !ed) continue;
+      setRowsHtml += `<div class="cat-row" data-row="${r}" data-set-zone="1">
+      ${ed ? `<span class="row-label" data-drag="set-row" data-row="${r}" title="ลากเพื่อเรียงแถว">⠿${nSetRows > 1 ? ` แถว ${r + 1}` : ''}</span>` : ''}
+      <div class="sets${cols ? ' fixed' : ''}"${cols ? ` style="--cols:${cols};--cols-m:${Math.min(cols, 2)}"` : ''}>${inRow.length ? inRow.map(setCard).join('') : '<div class="empty-drop">ลากเซ็ตมาวางที่นี่</div>'}</div>
+    </div>`;
+    }
+    const setRowBtns = ed ? `<div class="cat-tools" style="margin-left:0;margin-top:6px"><button onclick="addSetRow()">＋ แถว</button>${setRowCount() > 1 ? `<button onclick="removeSetRow()">－ แถว</button>` : ''}</div>` : '';
     html += `<section class="shop-part">
   <h2 class="part-head">🎁 ขายเป็นเซ็ต <span>${setList.length} เซ็ต</span>${setsHidden() ? '<span class="hidden-tag">ซ่อนอยู่</span>' : ''}</h2>
-  <div class="sets${cols ? ' fixed' : ''}"${cols ? ` style="--cols:${cols};--cols-m:${Math.min(cols, 2)}"` : ''}>${setList.map(setCard).join('')}</div>
+  ${setRowsHtml}${setRowBtns}
 </section>`;
   }
-  const ed = editing();
   if (singles.length || (ed && curCat !== SETS_KEY)) {
     const one = view === 'list' ? row : card;
     const wrap = view === 'list' ? 'list' : 'grid';
@@ -1060,6 +1078,38 @@ function removeRow(c) {
   renderShop();
 }
 
+/* set rows */
+const setRowOf = s => Math.max(0, s.row | 0);
+function setRowCount() {
+  const used = data.sets.reduce((m, s) => Math.max(m, setRowOf(s) + 1), 1);
+  return Math.max(used, data.shop.set_rows || 1);
+}
+function addSetRow() { data.shop.set_rows = setRowCount() + 1; markDirty(); renderShop(); }
+function removeSetRow() {
+  const n = setRowCount();
+  if (n <= 1) return;
+  data.sets.forEach(s => { if (setRowOf(s) === n - 1) s.row = n - 2; });
+  data.shop.set_rows = n - 1;
+  markDirty();
+  renderShop();
+}
+function moveSetRow(fromRow, toRow, after) {
+  const n = setRowCount();
+  const order = Array.from({length: n}, (_, i) => i);
+  order.splice(order.indexOf(fromRow), 1);
+  let at = order.indexOf(toRow) + (after ? 1 : 0);
+  if (at < 0) at = order.length;
+  order.splice(at, 0, fromRow);
+  const remap = new Map(order.map((old, idx) => [old, idx]));
+  data.sets.forEach(s => { s.row = remap.get(setRowOf(s)) ?? setRowOf(s); });
+  markDirty();
+  renderShop();
+}
+function moveSetToRow(id, row) {
+  const s = data.sets.find(x => x.id === id);
+  if (s) { s.row = row; markDirty(); renderShop(); }
+}
+
 /* categories (อื่น ๆ is the fixed fallback and always last) */
 function userCats() { return (data.shop.categories || []).filter(c => c !== OTHER); }
 function addCat() {
@@ -1164,6 +1214,13 @@ shopGrid.addEventListener('dragstart', e => {
     e.dataTransfer.setData('text/plain', '');
     return;
   }
+  if (el.dataset.drag === 'set-row') {
+    drag = { type: 'set-row', row: +el.dataset.row };
+    el.closest('.cat-row').classList.add('row-dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', '');
+    return;
+  }
   const id = +el.dataset.id;
   // dragging a picked card carries every picked card along; otherwise just this one
   const ids = el.dataset.drag === 'item' && SEL.has(id) ? data.items.filter(i => SEL.has(i.id)).map(i => i.id) : [id];
@@ -1177,6 +1234,17 @@ shopGrid.addEventListener('dragover', e => {
   e.preventDefault();
   clearDropMarks();
   dropAt = null;
+  if (drag.type === 'set-row') {
+    const rowEl = e.target.closest('.cat-row[data-set-zone]');
+    if (!rowEl) return;
+    const targetRow = +rowEl.dataset.row;
+    if (targetRow === drag.row) return;
+    const r = rowEl.getBoundingClientRect();
+    const after = e.clientY > r.top + r.height / 2;
+    dropAt = { type: 'set-row', row: targetRow, after };
+    rowEl.classList.add(after ? 'drop-after-row' : 'drop-before-row');
+    return;
+  }
   if (drag.type === 'row') {
     const rowEl = e.target.closest('.cat-row');
     if (!rowEl) return;
@@ -1231,15 +1299,23 @@ shopGrid.addEventListener('dragover', e => {
       if (!t) (rowEl || zone).classList.add('drop-zone');
     }
   }
+  if (drag.type === 'set') {
+    const rowEl = e.target.closest('[data-set-zone]');
+    if (rowEl && !t) { dropAt.setRow = +rowEl.dataset.row; rowEl.classList.add('drop-zone'); }
+  }
 });
 shopGrid.addEventListener('drop', e => {
   e.preventDefault();
   if (!drag || !dropAt) return;
   if (drag.type === 'row') { if (dropAt?.type === 'row') moveRow(drag.cat, drag.row, dropAt.cat, dropAt.row, dropAt.after); }
+  else if (drag.type === 'set-row') { if (dropAt?.type === 'set-row') moveSetRow(drag.row, dropAt.row, dropAt.after); }
   else if (drag.type === 'cat') moveCatTo(drag.cat, dropAt.cat, dropAt.after);
   else if (dropAt.stash) stashItems(drag.ids);
   else if (drag.type === 'item' && dropAt.cat) moveItems(drag.ids, dropAt.ref, dropAt.after, dropAt.cat, dropAt.row);
-  else if (drag.type === 'set' && dropAt.ref !== null) moveSet(drag.id, dropAt.ref, dropAt.after);
+  else if (drag.type === 'set') {
+    if (dropAt.ref !== null) moveSet(drag.id, dropAt.ref, dropAt.after);
+    else if (dropAt.setRow !== undefined) moveSetToRow(drag.id, dropAt.setRow);
+  }
 });
 shopGrid.addEventListener('dragend', () => {
   drag = dropAt = null;
@@ -1317,6 +1393,7 @@ function moveSet(id, ref, after) {
   const list = data.sets;
   const [s] = list.splice(list.findIndex(x => x.id === id), 1);
   const k = list.findIndex(x => x.id === ref);
+  s.row = list[k]?.row || 0;
   list.splice(after ? k + 1 : k, 0, s);
   markDirty();
   renderShop();
