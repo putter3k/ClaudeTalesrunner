@@ -262,7 +262,11 @@ body.editing .card.selected::after,body.editing .row.selected::after,body.editin
 .cat-row + .cat-row{margin-top:10px}
 body.editing .cat-row{border:1.5px dashed var(--border);border-radius:10px;padding:6px}
 body.editing .cat-row.drop-zone{border-color:var(--primary);outline:none;background:var(--primary-soft)}
-.row-label{display:block;font-size:.68rem;color:var(--muted);margin:0 0 4px 2px}
+.row-label{display:flex;align-items:center;font-size:.68rem;color:var(--muted);margin:0 0 4px 2px;cursor:grab;user-select:none}
+.row-label:hover{color:var(--primary)}
+body.editing .cat-row.row-dragging{opacity:.35}
+body.editing .cat-row.drop-before-row{box-shadow:0 -3px 0 var(--primary)}
+body.editing .cat-row.drop-after-row{box-shadow:0 3px 0 var(--primary)}
 
 /* ── stash: items you own but don't list (right column in edit mode) ── */
 .stash{display:none}
@@ -929,7 +933,7 @@ function renderShop() {
       const inRow = list.filter(i => rowOf(i) === r);
       if (!inRow.length && !ed) continue;
       rows += `<div class="cat-row" data-row="${r}">
-      ${ed && nRows > 1 ? `<span class="row-label">แถว ${r + 1}</span>` : ''}
+      ${ed ? `<span class="row-label" data-drag="row" data-row="${r}" data-cat="${esc(c)}" title="ลากเพื่อเรียงแถว">⠿${nRows > 1 ? ` แถว ${r + 1}` : ''}</span>` : ''}
       <div class="${wrap}">${inRow.length ? inRow.map(one).join('') : '<div class="empty-drop">ลากไอเทมมาวางที่นี่</div>'}</div>
     </div>`;
     }
@@ -1112,8 +1116,8 @@ function delCat(k) {
 let drag = null, dropAt = null;
 const shopGrid = $('shop-main');  // covers both the shop cards and the 📦 stash
 function clearDropMarks() {
-  shopGrid.querySelectorAll('.drop-before,.drop-after,.drop-zone,.cat-drop-before,.cat-drop-after')
-    .forEach(el => el.classList.remove('drop-before', 'drop-after', 'drop-zone', 'cat-drop-before', 'cat-drop-after'));
+  shopGrid.querySelectorAll('.drop-before,.drop-after,.drop-zone,.cat-drop-before,.cat-drop-after,.drop-before-row,.drop-after-row')
+    .forEach(el => el.classList.remove('drop-before', 'drop-after', 'drop-zone', 'cat-drop-before', 'cat-drop-after', 'drop-before-row', 'drop-after-row'));
 }
 // reorder categories by dragging a block next to another one (อื่น ๆ always stays last)
 function moveCatTo(cat, ref, after) {
@@ -1153,6 +1157,13 @@ shopGrid.addEventListener('dragstart', e => {
     e.dataTransfer.setData('text/plain', '');
     return;
   }
+  if (el.dataset.drag === 'row') {
+    drag = { type: 'row', cat: el.dataset.cat, row: +el.dataset.row };
+    el.closest('.cat-row').classList.add('row-dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', '');
+    return;
+  }
   const id = +el.dataset.id;
   // dragging a picked card carries every picked card along; otherwise just this one
   const ids = el.dataset.drag === 'item' && SEL.has(id) ? data.items.filter(i => SEL.has(i.id)).map(i => i.id) : [id];
@@ -1166,6 +1177,20 @@ shopGrid.addEventListener('dragover', e => {
   e.preventDefault();
   clearDropMarks();
   dropAt = null;
+  if (drag.type === 'row') {
+    const rowEl = e.target.closest('.cat-row');
+    if (!rowEl) return;
+    const zone = rowEl.closest('[data-cat-zone]');
+    if (!zone) return;
+    const targetCat = zone.dataset.catZone;
+    const targetRow = +rowEl.dataset.row;
+    if (targetCat === drag.cat && targetRow === drag.row) return;
+    const r = rowEl.getBoundingClientRect();
+    const after = e.clientY > r.top + r.height / 2;
+    dropAt = { type: 'row', cat: targetCat, row: targetRow, after };
+    rowEl.classList.add(after ? 'drop-after-row' : 'drop-before-row');
+    return;
+  }
   if (drag.type === 'cat') {
     // whole category block: before/after another block (sideways in the poster view, up/down otherwise)
     const sec = e.target.closest('.cat-section[data-cat-zone]');
@@ -1210,7 +1235,8 @@ shopGrid.addEventListener('dragover', e => {
 shopGrid.addEventListener('drop', e => {
   e.preventDefault();
   if (!drag || !dropAt) return;
-  if (drag.type === 'cat') moveCatTo(drag.cat, dropAt.cat, dropAt.after);
+  if (drag.type === 'row') { if (dropAt?.type === 'row') moveRow(drag.cat, drag.row, dropAt.cat, dropAt.row, dropAt.after); }
+  else if (drag.type === 'cat') moveCatTo(drag.cat, dropAt.cat, dropAt.after);
   else if (dropAt.stash) stashItems(drag.ids);
   else if (drag.type === 'item' && dropAt.cat) moveItems(drag.ids, dropAt.ref, dropAt.after, dropAt.cat, dropAt.row);
   else if (drag.type === 'set' && dropAt.ref !== null) moveSet(drag.id, dropAt.ref, dropAt.after);
@@ -1219,6 +1245,7 @@ shopGrid.addEventListener('dragend', () => {
   drag = dropAt = null;
   clearDropMarks();
   shopGrid.querySelectorAll('[data-drag],.cat-section').forEach(el => { el.draggable = false; el.classList.remove('dragging'); });
+  shopGrid.querySelectorAll('.row-dragging').forEach(el => el.classList.remove('row-dragging'));
 });
 
 function moveItem(id, ref, after, cat, row) { moveItems([id], ref, after, cat, row); }
@@ -1250,6 +1277,28 @@ function moveItems(ids, ref, after, cat, row) {
   list.splice(at, 0, ...moving);
   data.items = list;
   clearSel();
+  markDirty();
+  renderShop();
+}
+function moveRow(fromCat, fromRow, toCat, toRow, after) {
+  if (fromCat === toCat) {
+    const n = rowCount(fromCat);
+    const order = Array.from({length: n}, (_, i) => i);
+    order.splice(order.indexOf(fromRow), 1);
+    let at = order.indexOf(toRow) + (after ? 1 : 0);
+    if (at < 0) at = order.length;
+    order.splice(at, 0, fromRow);
+    const remap = new Map(order.map((old, idx) => [old, idx]));
+    data.items.forEach(i => { if (catOf(i) === fromCat) i.row = remap.get(rowOf(i)) ?? rowOf(i); });
+  } else {
+    const insertAt = after ? toRow + 1 : toRow;
+    // shift target rows at/after insertAt up
+    data.items.forEach(i => { if (catOf(i) === toCat && rowOf(i) >= insertAt) i.row = rowOf(i) + 1; });
+    // move dragged row's items to target category
+    data.items.forEach(i => { if (catOf(i) === fromCat && rowOf(i) === fromRow) { i.category = toCat; i.row = insertAt; } });
+    // compact source: shift rows above fromRow down
+    data.items.forEach(i => { if (catOf(i) === fromCat && rowOf(i) > fromRow) i.row = rowOf(i) - 1; });
+  }
   markDirty();
   renderShop();
 }
