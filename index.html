@@ -348,6 +348,10 @@ body:is(.sc,.poster) .row{width:250px;padding:3px 6px}
 body:is(.sc,.poster) .row .icon{width:30px;height:30px}
 body:is(.sc,.poster) .row .name{font-size:.7rem}
 body.sc .card{box-shadow:none}
+/* exit button for screenshot mode (hidden in snap.ps1 pictures) */
+#sc-exit{display:none;position:fixed;top:8px;right:8px;z-index:999;border:none;border-radius:999px;padding:6px 12px;background:var(--primary);color:#fff;font:inherit;font-size:.8rem;cursor:pointer;opacity:.35;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+#sc-exit:hover{opacity:1}
+body.sc:not(.snap) #sc-exit{display:block}
 body.poster .cat-tools button{font-size:.66rem;padding:1px 5px}
 body.poster .empty-drop{padding:10px;min-width:180px}
 
@@ -473,6 +477,7 @@ tr.drop-below td,.part.drop-below{box-shadow:inset 0 -2px 0 var(--primary)}
 <style>#btn-edit,#btn-save,#btn-pick,#tabbtn-admin{display:none!important}</style>
 </head>
 <body>
+<button id="sc-exit" title="หรือกด Esc">✕ ออกจากโหมดแคปจอ</button>
 
 <header class="site-header" id="hdr">
   <div class="header-inner">
@@ -1134,6 +1139,7 @@ function renameCat(k, name) {
         data.shop.cat_rows[name] = data.shop.cat_rows[old];
         delete data.shop.cat_rows[old];
       }
+      (data.shop.board?.boxes || []).forEach(b => { if (b.cat === old) b.cat = name; });  // keep its place on board.html
       if (curCat === old) curCat = name;
       markDirty();
     }
@@ -1402,6 +1408,7 @@ function moveSet(id, ref, after) {
 function leaveSc() { if (document.body.classList.contains('sc')) { document.body.classList.remove('sc'); renderShop(); } }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') leaveSc(); });
 $('hdr').addEventListener('click', e => { if (!e.target.closest('button')) leaveSc(); });
+$('sc-exit').addEventListener('click', leaveSc);
 
 /* ════════════════ TAB: จัดการ ════════════════ */
 function status(el, msg, type) {
@@ -1809,7 +1816,7 @@ if (!window.SHOP_DATA) {
   $('load-notice').hidden = false;
   $('load-notice').textContent = '⚠️ โหลด items.js ไม่ได้ — ตรวจสอบว่าไฟล์ items.js อยู่ในโฟลเดอร์เดียวกัน';
 }
-if (new URLSearchParams(location.search).has('screenshot')) { document.body.classList.add('sc'); tab = 'shop'; }
+if (new URLSearchParams(location.search).has('screenshot')) { document.body.classList.add('sc', 'snap'); tab = 'shop'; }
 showTab(tab);
 </script>
 </body>

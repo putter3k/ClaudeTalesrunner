@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บอร์ดแคปจอ TalesRunner</title>
+<script src="items.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Noto+Sans+Thai:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FFF6F9;--card:#FFFFFF;--border:#F3D9E3;--set-border:#EFB3CA;
+  --primary:#C2316A;--primary-soft:#FCE4EE;--price-bg:#FFF1C2;--price-txt:#8A3D00;
+  --ask-bg:#EFEFEF;--ask-txt:#888;--note-txt:#8A3D6A;--txt:#2D1826;--muted:#9A7080;--red:#CC3344;
+  /* board geometry, set from data.shop.board by applyGeometry() */
+  --cw:96px;--ch:118px;--gap:16px;--icon:44px
+}
+html{font-size:16px}
+body{font-family:'Noto Sans Thai','Prompt',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+[hidden]{display:none!important}
+button,input,select{font-family:inherit}
+
+/* ── toolbar (edit only) ── */
+.toolbar{
+  position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:8px;
+  padding:8px 14px;background:linear-gradient(135deg,#E8547A 0%,#C2316A 100%);color:#fff;
+  box-shadow:0 2px 10px rgba(0,0,0,.12);font-size:.84rem
+}
+.toolbar b{font-family:'Prompt',sans-serif;font-size:1rem;margin-right:6px}
+.toolbar label{display:flex;align-items:center;gap:4px}
+.toolbar input[type=number]{width:54px;padding:3px 5px;border:none;border-radius:6px;font-size:.84rem}
+.toolbar select{padding:3px 5px;border:none;border-radius:6px;font-size:.84rem}
+.tb-btn{
+  background:#fff;color:var(--primary);border:none;cursor:pointer;font-family:'Prompt',sans-serif;
+  font-weight:600;font-size:.84rem;padding:6px 14px;border-radius:999px;white-space:nowrap;text-decoration:none
+}
+.tb-btn.dirty{background:#FFE36E;color:#6A3A00}
+.tb-ghost{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.7)}
+#status{opacity:.95;font-size:.78rem}
+.spacer{flex:1}
+
+/* ── layout: board on the left, panel on the right ── */
+.wrap{display:flex;align-items:flex-start;gap:14px;padding:14px}
+.board-scroll{flex:1;min-width:0;overflow:auto}
+
+/* the board never reflows: its size comes only from cols × rows */
+.board{
+  position:relative;background:var(--bg);flex:none;
+  padding:calc(var(--gap) / 2 + 6px) calc(var(--gap) / 2 + 4px) calc(var(--gap) / 2 + 4px);
+}
+.board-head{margin-bottom:calc(var(--gap) / 2 + 14px)}
+.board-head h1{font-family:'Prompt',sans-serif;font-size:1.25rem;font-weight:700;color:var(--primary);line-height:1.2}
+.board-head .sub{font-size:.74rem;color:var(--muted)}
+.grid-area{position:relative}
+.slot{position:absolute;border:1px dashed #EBCAD7;border-radius:6px}
+
+/* category box: covers w × h slots, its border sits in the gap around them */
+.box{
+  position:absolute;background:#fff;border:1.5px solid var(--border);border-radius:10px;
+  margin:calc(var(--gap) / -2 + 2px)
+}
+.box.overlap{border-color:var(--red);box-shadow:0 0 0 2px rgba(204,51,68,.25)}
+.box.moving{opacity:.75;z-index:5;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+.box-head{
+  position:absolute;left:8px;top:-.78em;z-index:2;display:flex;align-items:center;gap:4px;
+  background:#fff;border:1.5px solid var(--border);border-radius:999px;padding:0 8px;
+  font-family:'Prompt',sans-serif;font-size:.74rem;font-weight:600;color:var(--primary);line-height:1.45;
+  white-space:nowrap;max-width:calc(100% - 16px)
+}
+body.edit .box-head{cursor:grab;user-select:none}
+.box-head .n{font-weight:400;color:var(--muted);font-size:.66rem}
+.box-head .over{color:#fff;background:var(--red);border-radius:999px;padding:0 6px;font-size:.62rem}
+.box-head button{
+  border:1px solid var(--border);background:#fff;border-radius:999px;cursor:pointer;
+  font-size:.62rem;padding:0 5px;line-height:1.5;color:var(--muted)
+}
+.box-head button:hover{color:var(--primary);border-color:var(--primary)}
+.box-items{
+  position:absolute;inset:calc(var(--gap) / 2 - 3.5px);display:grid;
+  grid-template-columns:repeat(var(--w),var(--cw));grid-template-rows:repeat(var(--h),var(--ch));gap:var(--gap)
+}
+/* empty spots inside a box (edit only) */
+.eslot{border:1.5px dashed #F0D0DC;border-radius:8px}
+.drop-mark{position:absolute;z-index:6;pointer-events:none;border:2.5px solid var(--primary);border-radius:9px;background:rgba(194,49,106,.10)}
+.resize{
+  position:absolute;right:-2px;bottom:-2px;width:16px;height:16px;cursor:nwse-resize;z-index:3;
+  background:linear-gradient(135deg,transparent 50%,var(--set-border) 50%);border-radius:0 0 9px 0
+}
+.box.drop-zone{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-soft)}
+
+/* item card: exactly one slot */
+.card{
+  width:var(--cw);height:var(--ch);background:var(--card);border:1.5px solid var(--border);border-radius:8px;
+  padding:5px 4px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;position:relative;overflow:hidden
+}
+.card .icon{width:var(--icon);height:var(--icon);border-radius:7px;object-fit:contain;background:var(--bg);flex:none}
+.card .name{
+  font-size:.63rem;font-weight:500;text-align:center;line-height:1.3;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden
+}
+.card .meta{display:flex;justify-content:space-between;align-items:center;width:100%;gap:2px;margin-top:auto}
+.pack{
+  font-family:'Prompt',sans-serif;font-size:.56rem;font-weight:600;color:var(--primary);
+  background:var(--primary-soft);border-radius:999px;padding:0 5px;line-height:1.5
+}
+.price{
+  background:var(--price-bg);color:var(--price-txt);font-family:'Prompt',sans-serif;
+  font-weight:700;font-size:.62rem;border-radius:5px;padding:1px 4px;white-space:nowrap
+}
+.price.ask{background:var(--ask-bg);color:var(--ask-txt);font-weight:500}
+.price-in{
+  width:48px;padding:1px 3px;border:1.5px solid #E8C860;border-radius:5px;background:var(--price-bg);
+  color:var(--price-txt);font-family:'Prompt',sans-serif;font-weight:700;font-size:.62rem;outline:none
+}
+.price-in:focus{border-color:var(--primary);background:#fff}
+.qty{font-size:.58rem;color:var(--muted);white-space:nowrap}
+.card .note{
+  font-size:.54rem;color:var(--note-txt);background:var(--primary-soft);border-radius:5px;
+  padding:0 4px;width:100%;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:none
+}
+.badge-sold{
+  position:absolute;top:3px;right:3px;background:#D94060;color:#fff;font-family:'Prompt',sans-serif;
+  font-size:.52rem;font-weight:700;padding:0 5px;border-radius:999px
+}
+.sold-out{opacity:.5}
+body.edit .card{cursor:grab}
+.card.dragging,.stash-item.dragging{opacity:.35}
+
+/* ── right panel: categories not on the board + the stash ── */
+.panel{
+  width:270px;flex:none;position:sticky;top:56px;max-height:calc(100vh - 70px);overflow:auto;
+  background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:10px
+}
+.panel h3{font-family:'Prompt',sans-serif;font-size:.86rem;color:var(--primary);margin:4px 0 6px}
+.panel .hint{font-size:.7rem;color:var(--muted);margin-bottom:6px;line-height:1.4}
+.cat-btns{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
+.cat-btns button{
+  border:1.5px dashed var(--set-border);background:#fff;border-radius:999px;cursor:pointer;
+  font-size:.74rem;padding:2px 9px;color:var(--txt)
+}
+.cat-btns button:hover{border-style:solid;border-color:var(--primary);color:var(--primary)}
+.cat-btns span{color:var(--muted);font-size:.66rem}
+.cat-btns .new{border-style:solid;border-color:var(--primary);color:var(--primary);font-weight:600}
+.stash-cat{font-size:.66rem;color:var(--muted);font-weight:600;margin:6px 4px 1px}
+#stash{min-height:80px;border:1.5px dashed var(--border);border-radius:8px;padding:4px;display:flex;flex-direction:column;gap:3px}
+#stash.drop-zone{border-color:var(--primary);background:var(--primary-soft)}
+#stash-q{width:100%;padding:4px 8px;border:1.5px solid var(--border);border-radius:7px;font-size:.78rem;margin-bottom:6px;outline:none}
+.stash-item{display:flex;align-items:center;gap:6px;padding:2px 4px;border-radius:6px;cursor:grab;font-size:.72rem}
+.stash-item:hover{background:var(--primary-soft)}
+.stash-item img{width:26px;height:26px;object-fit:contain;flex:none}
+.stash-item .q{margin-left:auto;color:var(--muted);font-size:.66rem;white-space:nowrap}
+
+/* ── screenshot mode: only the board ── */
+body.sc .toolbar,body.sc .panel,body.sc .slot,body.sc .resize,body.sc .box-head button,body.sc .over,body.sc .sz,body.sc .eslot{display:none}
+body.sc .wrap{padding:0;justify-content:center}
+body.sc .board-scroll{flex:none;overflow:visible}
+#sc-exit{
+  display:none;position:fixed;top:8px;right:8px;z-index:999;border:none;border-radius:999px;padding:6px 12px;
+  background:var(--primary);color:#fff;font-size:.8rem;cursor:pointer;opacity:.35;box-shadow:0 2px 8px rgba(0,0,0,.2)
+}
+#sc-exit:hover{opacity:1}
+body.sc:not(.snap) #sc-exit{display:block}
+</style>
+</head>
+<body class="edit">
+<button id="sc-exit" title="หรือกด Esc">✕ ออกจากโหมดแคปจอ</button>
+
+<div class="toolbar">
+  <b>▦ บอร์ดแคปจอ</b>
+  <label>คอลัมน์ <input type="number" id="g-cols" min="2" max="40"></label>
+  <label>แถว <input type="number" id="g-rows" min="1" max="60"></label>
+  <label>ขนาดการ์ด
+    <select id="g-size">
+      <option value="s">เล็ก</option>
+      <option value="m">กลาง</option>
+      <option value="l">ใหญ่</option>
+    </select>
+  </label>
+  <span id="g-px" style="opacity:.85;font-size:.74rem"></span>
+  <span class="spacer"></span>
+  <span id="status"></span>
+  <a class="tb-btn tb-ghost" href="admin.html">⚙️ หน้าจัดการ</a>
+  <button class="tb-btn tb-ghost" id="btn-sc">📷 แคปจอ</button>
+  <button class="tb-btn" id="btn-save">💾 บันทึก</button>
+</div>
+
+<div class="wrap">
+  <div class="board-scroll">
+    <div class="board" id="board">
+      <div class="board-head">
+        <h1 id="shop-name"></h1>
+        <div class="sub" id="shop-sub"></div>
+      </div>
+      <div class="grid-area" id="grid"></div>
+    </div>
+  </div>
+  <aside class="panel" id="panel">
+    <h3>เพิ่มกล่อง</h3>
+    <p class="hint">ลากชื่อกล่องเพื่อย้าย · ลากมุมขวาล่างเพื่อปรับขนาด · ดับเบิลคลิกชื่อเพื่อแก้</p>
+    <div class="cat-btns" id="cat-btns"></div>
+    <h3>📦 ของที่ยังไม่ได้วาง</h3>
+    <p class="hint">ลากไปวางช่องไหนก็ได้ในกล่อง · วางทับของอื่น = สลับที่ · ลากกลับมาที่นี่ = เอาออกจากบอร์ด</p>
+    <input id="stash-q" placeholder="ค้นหาในคลัง…">
+    <div id="stash"></div>
+  </aside>
+</div>
+
+<script>
+/* ════════════════ SHARED (same rules as admin.html) ════════════════ */
+const PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72'%3E%3Crect width='72' height='72' rx='12' fill='%23F3D9E3'/%3E%3Ctext x='36' y='44' font-size='30' text-anchor='middle' fill='%23C2316A'%3E%3F%3C/text%3E%3C/svg%3E";
+const OTHER = 'อื่น ๆ';
+const $ = id => document.getElementById(id);
+
+function esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function today() {
+  const th = new Date(Date.now() + 7 * 60 * 60 * 1000);
+  const pad = n => String(n).padStart(2, '0');
+  return `${th.getUTCFullYear()}-${pad(th.getUTCMonth()+1)}-${pad(th.getUTCDate())}T${pad(th.getUTCHours())}:${pad(th.getUTCMinutes())}`;
+}
+const MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+function thaiDate(str) {
+  if (!str) return '';
+  const [datePart, timePart] = str.split('T');
+  const [y, m, d] = datePart.split('-').map(Number);
+  const dateStr = `${d} ${MONTHS[m-1]} ${y + 543}`;
+  return timePart ? `${dateStr} ${timePart} น.` : dateStr;
+}
+const packOf = item => item.pack > 1 ? item.pack : 1;
+const hasPacks = name => data.items.some(i => i.name === name && packOf(i) > 1);
+const packLabel = item => packOf(item) > 1 || hasPacks(item.name) ? `${packOf(item)} ชิ้น` : '';
+const fullName = item => item.name + (packOf(item) > 1 ? ` (${packOf(item)} ชิ้น)` : '');
+function img(src, cls) {
+  return `<img${cls ? ` class="${cls}"` : ''} src="${esc(src || PLACEHOLDER)}" alt="" loading="lazy" draggable="false" onerror="this.src='${PLACEHOLDER}'">`;
+}
+
+let data = window.SHOP_DATA
+  ? JSON.parse(JSON.stringify(window.SHOP_DATA))
+  : { shop: { name: 'ร้านไอเทม TalesRunner', updated: today() }, items: [], sets: [] };
+data.sets = data.sets || [];
+
+function categories() { return (data.shop.categories || []).filter(c => c !== OTHER).concat(OTHER); }
+function catOf(item) { return categories().includes(item.category) ? item.category : OTHER; }
+const rowOf = item => Math.max(0, item.row | 0);
+
+function allocate(items, sets) {
+  const left = new Map(items.map(i => [i.id, Math.max(0, i.stock || 0)]));
+  const count = new Map();
+  for (const s of sets) {
+    const parts = (s.parts || []).filter(p => left.has(p.item) && p.qty > 0);
+    let n = parts.length ? Math.min(...parts.map(p => Math.floor(left.get(p.item) / p.qty))) : 0;
+    if (s.max != null && s.max >= 0) n = Math.min(n, s.max);
+    for (const p of parts) left.set(p.item, left.get(p.item) - n * p.qty);
+    count.set(s.id, n);
+  }
+  return { count, left };
+}
+
+let dirty = false;
+function markDirty() {
+  dirty = true;
+  $('btn-save').classList.add('dirty');
+  $('status').textContent = 'มีการแก้ไขที่ยังไม่บันทึก';
+}
+window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+/* ════════════════ BOARD ════════════════ */
+// data.shop.board = { cols, rows, size: 's'|'m'|'l',
+//   boxes: [{ id, title, x, y, w, h, items: [{ id, x, y }] }] }
+// box x/y/w/h are board slots; item x/y are slots inside its box. Nothing here touches item.category/hidden.
+const SIZES = {
+  s: { cw: 84, ch: 106, icon: 38, gap: 14 },
+  m: { cw: 96, ch: 118, icon: 44, gap: 16 },
+  l: { cw: 112, ch: 136, icon: 56, gap: 18 }
+};
+function board() {
+  const b = data.shop.board = data.shop.board || {};
+  b.cols = Math.max(2, b.cols | 0 || 14);
+  b.rows = Math.max(1, b.rows | 0 || 10);
+  if (!SIZES[b.size]) b.size = 'm';
+  b.boxes = b.boxes || [];
+  for (const bx of b.boxes) {
+    if (!bx.id) bx.id = newBoxId(b);
+    if (bx.title == null) bx.title = bx.cat || '';
+    // older boards (one box per category, items in shop order) become fixed positions once
+    if (!bx.items) {
+      bx.items = [];
+      if (bx.cat) fillBox(bx, sellable().filter(i => !i.hidden && catOf(i) === bx.cat && !placedIds(b).has(i.id)));
+    }
+    delete bx.cat;
+  }
+  return b;
+}
+function newBoxId(b) { let n = 1; while (b.boxes.some(x => x.id === 'b' + n)) n++; return 'b' + n; }
+const geo = () => SIZES[board().size];
+const stepX = () => geo().cw + geo().gap;
+const stepY = () => geo().ch + geo().gap;
+const boxById = id => board().boxes.find(x => x.id === id);
+const isSc = () => document.body.classList.contains('sc');
+const placedIds = b => new Set(b.boxes.flatMap(x => x.items || []).map(p => p.id));
+
+function applyGeometry() {
+  const b = board(), g = geo(), st = document.documentElement.style;
+  st.setProperty('--cw', g.cw + 'px'); st.setProperty('--ch', g.ch + 'px');
+  st.setProperty('--icon', g.icon + 'px'); st.setProperty('--gap', g.gap + 'px');
+  $('grid').style.width = b.cols * g.cw + (b.cols - 1) * g.gap + 'px';
+  $('grid').style.height = b.rows * g.ch + (b.rows - 1) * g.gap + 'px';
+  $('g-cols').value = b.cols; $('g-rows').value = b.rows; $('g-size').value = b.size;
+  $('g-px').textContent = `รูปกว้าง ~${$('board').offsetWidth}px`;
+}
+
+// what can go on the board: like the shop, minus pieces fully used in sets (stock = what is left)
+function sellable() {
+  const { left } = allocate(data.items, data.sets);
+  return data.items
+    .filter(i => !((i.stock || 0) > 0 && left.get(i.id) <= 0))
+    .map(i => ({ ...i, stock: left.get(i.id) }));
+}
+// fill the empty spots of a box row by row
+function fillBox(bx, list) {
+  const used = new Set(bx.items.map(p => p.y * 1000 + p.x));
+  let k = 0;
+  for (let y = 0; y < bx.h && k < list.length; y++) for (let x = 0; x < bx.w && k < list.length; x++) {
+    if (!used.has(y * 1000 + x)) bx.items.push({ id: list[k++].id, x, y });
+  }
+}
+
+function priceTag(x) {
+  if (!isSc()) {
+    return `<input class="price-in" type="number" min="0" value="${x.price ?? ''}" placeholder="ราคา"
+      onchange="setPrice(${x.id}, this.value)" title="ราคา (บาท) — เว้นว่าง = สอบถาม">`;
+  }
+  return x.price > 0
+    ? `<span class="price">${x.price.toLocaleString('th-TH')} ฿</span>`
+    : `<span class="price ask">สอบถาม</span>`;
+}
+function card(item, p) {
+  const out = !(item.stock > 0);
+  return `<div class="card${out ? ' sold-out' : ''}" title="${esc(fullName(item))}" data-id="${item.id}" style="grid-column:${p.x + 1};grid-row:${p.y + 1}">
+  ${out ? '<span class="badge-sold">ขายแล้ว</span>' : ''}
+  ${img(item.image, 'icon')}
+  <div class="name">${esc(item.name)}</div>
+  ${packLabel(item) ? `<span class="pack">${packLabel(item)}</span>` : ''}
+  <div class="meta">${priceTag(item)}<span class="qty">${out ? 'หมด' : 'เหลือ ' + item.stock}</span></div>
+  ${item.note ? `<div class="note">${esc(item.note)}</div>` : ''}
+</div>`;
+}
+
+function boxRect(bx) {
+  const g = geo();
+  return {
+    left: bx.x * stepX(), top: bx.y * stepY(),
+    width: bx.w * g.cw + (bx.w - 1) * g.gap + g.gap - 4, height: bx.h * g.ch + (bx.h - 1) * g.gap + g.gap - 4
+  };
+}
+const overlaps = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+
+function render() {
+  const b = board(), s = data.shop;
+  $('shop-name').textContent = s.name || 'ร้านไอเทม TalesRunner';
+  $('shop-sub').textContent = 'ราคาเป็นบาท' + (s.updated ? ' · อัปเดตล่าสุด ' + thaiDate(s.updated) : '');
+  applyGeometry();
+  const items = sellable(), byId = new Map(items.map(i => [i.id, i]));
+  // forget pieces that were deleted or went fully into sets
+  b.boxes.forEach(bx => { bx.items = bx.items.filter(p => byId.has(p.id)); });
+
+  let html = '';
+  if (!isSc()) {
+    for (let y = 0; y < b.rows; y++) for (let x = 0; x < b.cols; x++) {
+      html += `<div class="slot" style="left:${x * stepX()}px;top:${y * stepY()}px;width:${geo().cw}px;height:${geo().ch}px"></div>`;
+    }
+  }
+  for (const bx of b.boxes) {
+    const inside = bx.items.filter(p => p.x < bx.w && p.y < bx.h), over = bx.items.length - inside.length;
+    const clash = b.boxes.some(o => o !== bx && overlaps(o, bx)), r = boxRect(bx);
+    let cells = '';
+    if (!isSc()) {
+      const taken = new Set(inside.map(p => p.y * 1000 + p.x));
+      for (let y = 0; y < bx.h; y++) for (let x = 0; x < bx.w; x++) {
+        if (!taken.has(y * 1000 + x)) cells += `<div class="eslot" style="grid-column:${x + 1};grid-row:${y + 1}"></div>`;
+      }
+    }
+    html += `<div class="box${clash ? ' overlap' : ''}" data-box="${bx.id}" style="left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px">
+  <div class="box-head" title="ลากเพื่อย้ายกล่อง · ดับเบิลคลิกเพื่อแก้ชื่อ"><span class="ttl">${esc(bx.title) || (isSc() ? '' : '(ไม่มีชื่อ)')}</span>
+    <span class="n sz">${bx.w}×${bx.h}</span>
+    ${over > 0 ? `<span class="over" title="กล่องเล็กไป ของ ${over} ชิ้นอยู่นอกกรอบ (ไม่แสดง) — ขยายกล่องหรือกด ⇱">ล้น ${over}</span>` : ''}
+    <button data-act="pack" title="จัดของชิดซ้ายบน เรียงแถว">⇱</button>
+    <button data-act="rename" title="แก้ชื่อกล่อง">✏️</button>
+    ${bx.items.length ? `<button data-act="clear" title="เอาของในกล่องนี้ออกทั้งหมด">📦</button>` : ''}
+    <button data-act="remove" title="ลบกล่อง (ของกลับไปที่แผงขวา)">✕</button>
+  </div>
+  <div class="box-items" style="--w:${bx.w};--h:${bx.h}">${cells}${inside.map(p => card(byId.get(p.id), p)).join('')}</div>
+  <div class="resize" title="ลากเพื่อปรับขนาด"></div>
+</div>`;
+  }
+  $('grid').innerHTML = html;
+
+  // panel: add an empty box, or a box filled with what is left of a category
+  const placed = placedIds(b), free = items.filter(i => !placed.has(i.id));
+  const freeBy = new Map(categories().map(c => [c, []]));
+  free.forEach(i => freeBy.get(catOf(i)).push(i));
+  $('cat-btns').innerHTML = `<button class="new" data-new="1">＋ กล่องเปล่า</button>` +
+    categories().filter(c => freeBy.get(c).length)
+      .map(c => `<button data-cat="${esc(c)}" title="สร้างกล่องพร้อมของในหมวดนี้ที่ยังไม่ได้วาง">＋ ${esc(c)} <span>${freeBy.get(c).length}</span></button>`).join('');
+
+  const q = $('stash-q').value.toLowerCase().trim();
+  let list = '';
+  for (const c of categories()) {
+    const rows = freeBy.get(c).filter(i => !q || i.name.toLowerCase().includes(q));
+    if (!rows.length) continue;
+    list += `<div class="stash-cat">${esc(c)}</div>` + rows.map(i =>
+      `<div class="stash-item" draggable="true" data-id="${i.id}" title="${esc(fullName(i))}">${img(i.image)}<span>${esc(fullName(i))}</span><span class="q">${i.stock > 0 ? 'มี ' + i.stock : 'หมด'}</span></div>`).join('');
+  }
+  $('stash').innerHTML = list || '<span class="hint" style="padding:6px">วางครบทุกชิ้นแล้ว</span>';
+  fitSc();
+}
+
+/* ── board settings ── */
+function clampBoxes() {
+  const b = board();
+  for (const bx of b.boxes) {
+    bx.w = Math.max(1, Math.min(bx.w, b.cols)); bx.h = Math.max(1, Math.min(bx.h, b.rows));
+    bx.x = Math.max(0, Math.min(bx.x, b.cols - bx.w)); bx.y = Math.max(0, Math.min(bx.y, b.rows - bx.h));
+  }
+}
+$('g-cols').addEventListener('change', e => { board().cols = Math.max(2, Math.min(40, +e.target.value || 14)); clampBoxes(); markDirty(); render(); });
+$('g-rows').addEventListener('change', e => { board().rows = Math.max(1, Math.min(60, +e.target.value || 10)); clampBoxes(); markDirty(); render(); });
+$('g-size').addEventListener('change', e => { board().size = e.target.value; markDirty(); render(); });
+$('stash-q').addEventListener('input', render);
+
+// a new box goes to the first free spot (the board grows if there is none)
+function addBox(title, w, h) {
+  const b = board();
+  w = Math.min(b.cols, w); h = Math.min(b.rows, h);
+  let spot = null;
+  for (let y = 0; y <= b.rows - h && !spot; y++) for (let x = 0; x <= b.cols - w && !spot; x++) {
+    const t = { x, y, w, h };
+    if (!b.boxes.some(o => overlaps(o, t))) spot = t;
+  }
+  if (!spot) { b.rows += h; spot = { x: 0, y: b.rows - h, w, h }; }
+  const bx = { id: newBoxId(b), title, ...spot, items: [] };
+  b.boxes.push(bx);
+  return bx;
+}
+$('cat-btns').addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  if (btn.dataset.new) {
+    const title = prompt('ชื่อกล่อง', 'กล่องใหม่');
+    if (title === null) return;
+    addBox(title.trim(), 3, 2);
+  } else {
+    const cat = btn.dataset.cat, placed = placedIds(board());
+    const list = sellable().filter(i => catOf(i) === cat && !placed.has(i.id));
+    const w = Math.min(6, Math.max(2, list.length));
+    fillBox(addBox(cat, w, Math.ceil(list.length / w)), list);
+  }
+  markDirty(); render();
+});
+
+function renameBox(bx) {
+  const title = prompt('ชื่อกล่อง', bx.title);
+  if (title === null) return;
+  bx.title = title.trim();
+  markDirty(); render();
+}
+$('grid').addEventListener('click', e => {
+  const btn = e.target.closest('.box-head button');
+  if (!btn) return;
+  const bx = boxById(btn.closest('.box').dataset.box), b = board();
+  const act = btn.dataset.act;
+  if (act === 'rename') return renameBox(bx);
+  if (act === 'remove') {
+    if (bx.items.length && !confirm(`ลบกล่อง "${bx.title}"? (ของ ${bx.items.length} ชิ้นจะกลับไปที่แผงขวา)`)) return;
+    b.boxes = b.boxes.filter(x => x !== bx);
+  }
+  if (act === 'clear') {
+    if (!confirm(`เอาของในกล่อง "${bx.title}" ออกทั้งหมด?`)) return;
+    bx.items = [];
+  }
+  if (act === 'pack') {
+    const order = [...bx.items].sort((p, q) => p.y - q.y || p.x - q.x);
+    bx.items = [];
+    order.forEach((p, k) => bx.items.push({ id: p.id, x: k % bx.w, y: Math.floor(k / bx.w) }));
+  }
+  markDirty(); render();
+});
+$('grid').addEventListener('dblclick', e => {
+  const head = e.target.closest('.box-head');
+  if (head && !isSc() && !e.target.closest('button')) renameBox(boxById(head.closest('.box').dataset.box));
+});
+
+/* ── move / resize a box with the mouse (snaps to slots; its items move with it) ── */
+let boxDrag = null;
+$('grid').addEventListener('pointerdown', e => {
+  if (isSc() || e.button !== 0) return;
+  const head = e.target.closest('.box-head'), handle = e.target.closest('.resize');
+  if ((!head && !handle) || e.target.closest('button')) return;
+  const el = e.target.closest('.box'), bx = boxById(el.dataset.box);
+  boxDrag = { el, bx, mode: handle ? 'size' : 'move', sx: e.clientX, sy: e.clientY, orig: { x: bx.x, y: bx.y, w: bx.w, h: bx.h } };
+  el.classList.add('moving');
+  el.setPointerCapture(e.pointerId);
+  e.preventDefault();
+});
+$('grid').addEventListener('pointermove', e => {
+  if (!boxDrag) return;
+  const { bx, orig, mode, el } = boxDrag, b = board();
+  const dx = Math.round((e.clientX - boxDrag.sx) / stepX()), dy = Math.round((e.clientY - boxDrag.sy) / stepY());
+  if (mode === 'move') {
+    bx.x = Math.max(0, Math.min(b.cols - bx.w, orig.x + dx));
+    bx.y = Math.max(0, Math.min(b.rows - bx.h, orig.y + dy));
+  } else {
+    bx.w = Math.max(1, Math.min(b.cols - bx.x, orig.w + dx));
+    bx.h = Math.max(1, Math.min(b.rows - bx.y, orig.h + dy));
+  }
+  const r = boxRect(bx);
+  el.style.left = r.left + 'px'; el.style.top = r.top + 'px';
+  el.style.width = r.width + 'px'; el.style.height = r.height + 'px';
+  el.querySelector('.sz').textContent = `${bx.w}×${bx.h}`;
+});
+function endBoxDrag() {
+  if (!boxDrag) return;
+  const { bx, orig } = boxDrag;
+  boxDrag = null;
+  if (bx.x !== orig.x || bx.y !== orig.y || bx.w !== orig.w || bx.h !== orig.h) markDirty();
+  render();
+}
+$('grid').addEventListener('pointerup', endBoxDrag);
+$('grid').addEventListener('pointercancel', endBoxDrag);
+
+/* ── drag items onto any spot of a box ── */
+let drag = null, dropAt = null;
+document.addEventListener('mousedown', e => {
+  const c = e.target.closest('.card');
+  if (c && !isSc()) c.draggable = !e.target.closest('input');
+});
+function clearMarks() {
+  document.querySelectorAll('.drop-zone').forEach(el => el.classList.remove('drop-zone'));
+  $('drop-mark')?.remove();
+}
+// board slot under the mouse → the box covering it and the spot inside that box
+function spotAt(cx, cy) {
+  const g = $('grid').getBoundingClientRect();
+  const gx = Math.floor((cx - g.left + geo().gap / 2) / stepX()), gy = Math.floor((cy - g.top + geo().gap / 2) / stepY());
+  const bx = [...board().boxes].reverse().find(o => gx >= o.x && gx < o.x + o.w && gy >= o.y && gy < o.y + o.h);
+  return bx ? { box: bx, x: gx - bx.x, y: gy - bx.y } : null;
+}
+document.addEventListener('dragstart', e => {
+  const el = e.target.closest?.('.card[data-id],.stash-item[data-id]');
+  if (!el) return;
+  drag = { id: +el.dataset.id };
+  el.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', '');
+});
+document.addEventListener('dragover', e => {
+  if (!drag) return;
+  clearMarks(); dropAt = null;
+  if (e.target.closest('#panel')) {
+    dropAt = { panel: true }; $('stash').classList.add('drop-zone');
+  } else {
+    const at = spotAt(e.clientX, e.clientY);
+    if (!at) return;
+    dropAt = at;
+    const m = document.createElement('div');
+    m.id = 'drop-mark'; m.className = 'drop-mark';
+    Object.assign(m.style, {
+      left: (at.box.x + at.x) * stepX() - 2 + 'px', top: (at.box.y + at.y) * stepY() - 2 + 'px',
+      width: geo().cw + 4 + 'px', height: geo().ch + 4 + 'px'
+    });
+    $('grid').appendChild(m);
+  }
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+});
+document.addEventListener('drop', e => {
+  if (!drag || !dropAt) return;
+  e.preventDefault();
+  placeItem(drag.id, dropAt);
+});
+document.addEventListener('dragend', () => { drag = dropAt = null; clearMarks(); render(); });
+
+// put an item on a spot; whatever was there swaps to where the item came from
+function placeItem(id, at) {
+  const b = board();
+  const fromBox = b.boxes.find(o => o.items.some(p => p.id === id));
+  const from = fromBox && fromBox.items.find(p => p.id === id);
+  if (fromBox) fromBox.items = fromBox.items.filter(p => p !== from);
+  if (!at.panel) {
+    const other = at.box.items.find(p => p.x === at.x && p.y === at.y);
+    if (other) {
+      at.box.items = at.box.items.filter(p => p !== other);
+      if (from) fromBox.items.push({ id: other.id, x: from.x, y: from.y });
+    }
+    at.box.items.push({ id, x: at.x, y: at.y });
+  }
+  markDirty();
+}
+
+function setPrice(id, v) {
+  const item = data.items.find(i => i.id === id);
+  item.price = v === '' ? null : Math.max(0, +v);
+  markDirty();
+}
+
+/* ── screenshot mode ── */
+// a board wider than the window is shrunk to fit, so it can be captured in one go
+function fitSc() {
+  const bd = $('board');
+  bd.style.zoom = '';
+  if (isSc() && !document.body.classList.contains('snap')) {
+    const k = Math.min(1, (window.innerWidth - 4) / bd.offsetWidth);
+    if (k < 1) bd.style.zoom = k;
+  }
+}
+window.addEventListener('resize', fitSc);
+$('btn-sc').addEventListener('click', () => { document.body.classList.add('sc'); render(); window.scrollTo({ top: 0 }); });
+function leaveSc() { if (isSc()) { document.body.classList.remove('sc'); render(); } }
+$('sc-exit').addEventListener('click', leaveSc);
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !e.target.closest('input')) leaveSc(); });
+
+/* ════════════════ SAVE (writes items.js — same file and method as admin.html) ════════════════ */
+function getJS() {
+  const copy = JSON.parse(JSON.stringify(data));
+  copy.shop.updated = today();
+  return 'var SHOP_DATA = ' + JSON.stringify(copy, null, 2) + ';\n';
+}
+function saved(msg) {
+  dirty = false;
+  data.shop.updated = today();
+  $('btn-save').classList.remove('dirty');
+  $('status').textContent = msg;
+  render();
+}
+async function saveData() {
+  const st = $('status');
+  if (location.protocol !== 'file:') {
+    try {
+      st.textContent = '⏳ กำลังบันทึก…';
+      const r = await fetch('/save', { method: 'POST', body: getJS() });
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.error);
+      saved('✅ บันทึกแล้ว!');
+    } catch (e) { st.textContent = '❌ ' + e.message; }
+  } else if (window.showSaveFilePicker) {
+    try {
+      const handle = await getSaveHandle();
+      if (!handle) { st.textContent = 'ยกเลิกการบันทึก'; return; }
+      const w = await handle.createWritable();
+      await w.write(getJS());
+      await w.close();
+      saved('✅ บันทึกลง ' + handle.name + ' แล้ว!');
+    } catch (e) { st.textContent = '❌ ' + e.message; }
+  } else {
+    const a = document.createElement('a');
+    a.href = 'data:text/javascript;charset=utf-8,' + encodeURIComponent(getJS());
+    a.download = 'items.js';
+    a.click();
+    saved('✅ ดาวน์โหลดแล้ว — นำไปแทนไฟล์เดิม');
+  }
+}
+let saveHandle = null;
+function idb(mode, fn) {
+  return new Promise((resolve, reject) => {
+    const open = indexedDB.open('tr-admin', 1);
+    open.onupgradeneeded = () => open.result.createObjectStore('kv');
+    open.onerror = () => reject(open.error);
+    open.onsuccess = () => {
+      const req = fn(open.result.transaction('kv', mode).objectStore('kv'));
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    };
+  });
+}
+async function getSaveHandle() {
+  if (!saveHandle) {
+    try { saveHandle = await idb('readonly', s => s.get('items-handle')) || null; } catch {}
+  }
+  if (saveHandle) {
+    const opts = { mode: 'readwrite' };
+    if (await saveHandle.queryPermission(opts) === 'granted' ||
+        await saveHandle.requestPermission(opts) === 'granted') return saveHandle;
+  }
+  try {
+    saveHandle = await window.showSaveFilePicker({
+      suggestedName: 'items.js',
+      types: [{ description: 'items.js', accept: { 'text/javascript': ['.js'] } }]
+    });
+  } catch (e) {
+    if (e.name === 'AbortError') return null;
+    throw e;
+  }
+  try { await idb('readwrite', s => s.put(saveHandle, 'items-handle')); } catch {}
+  return saveHandle;
+}
+$('btn-save').addEventListener('click', saveData);
+document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveData(); } });
+
+/* ════════════════ START ════════════════ */
+if (!window.SHOP_DATA) $('status').textContent = '⚠️ โหลด items.js ไม่ได้';
+if (new URLSearchParams(location.search).has('screenshot')) document.body.classList.add('sc', 'snap');
+// first visit: a box for every shown category that has something to sell
+if (!board().boxes.length) {
+  const hidden = data.shop.hidden_categories || [];
+  const items = sellable().filter(i => !i.hidden);
+  for (const c of categories()) {
+    const list = items.filter(i => catOf(i) === c);
+    if (hidden.includes(c) || !list.length) continue;
+    const w = Math.min(6, Math.max(2, list.length));
+    fillBox(addBox(c, w, Math.ceil(list.length / w)), list);
+  }
+  if (board().boxes.length) { markDirty(); $('status').textContent = 'จัดกล่องให้อัตโนมัติแล้ว — ลากปรับได้ แล้วกด 💾 บันทึก'; }
+}
+render();
+</script>
+</body>
+</html>

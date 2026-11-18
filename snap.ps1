@@ -26,7 +26,7 @@ New-Item -ItemType Directory -Force $outDir | Out-Null
 $stamp = Get-Date -Format 'yyyyMMdd-HHmm'
 $raw = Join-Path $env:TEMP "tr-shop-raw-$stamp.png"
 $profileDir = Join-Path $env:TEMP 'tr-shop-snap-profile'
-$url = 'file:///' + ((Join-Path $root 'shop.html') -replace '\\', '/') + '?screenshot'
+$url = 'file:///' + ((Join-Path $root 'index.html') -replace '\\', '/') + '?screenshot'
 
 Write-Host '📷 กำลังสร้างรูปร้าน...'
 # very tall window so the whole page fits; the empty bottom is trimmed below
